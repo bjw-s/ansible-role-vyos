@@ -1,0 +1,46 @@
+---
+- name: managed files | switch to ssh connection
+  set_fact:
+    ansible_connection: ssh
+
+- name: managed files | make sure target folders exist
+  ansible.builtin.file:
+    path: "{{ item['dest'] | dirname }}"
+    state: directory
+    owner: root
+    group: vyattacfg
+    mode: "0775"
+  become: true
+  with_items:
+    - "{{ vyos_managed_files }}"
+
+- name: managed files | download remote files
+  ansible.builtin.get_url:
+    url: "{{ item['url'] }}"
+    dest: "{{ item['dest'] }}"
+    owner: root
+    group: vyattacfg
+    mode: "{{ item['mode'] | default('0644') }}"
+  become: true
+  with_items:
+    - "{{ vyos_managed_files }}"
+  when:
+    - item['url'] is defined
+
+- name: managed files | create files from templates
+  ansible.builtin.template:
+    src: "{{ item['template'] }}"
+    dest: "{{ item['dest'] }}"
+    owner: root
+    group: vyattacfg
+    mode: "{{ item['mode'] | default('0644') }}"
+    lstrip_blocks: true
+  become: true
+  with_items:
+    - "{{ vyos_managed_files }}"
+  when:
+    - item['template'] is defined
+
+- name: managed files | switch to network_cli connection
+  set_fact:
+    ansible_connection: ansible.netcommon.network_cli

@@ -1,0 +1,82 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{#- Macro to generate "delete" commands for configuration -#}
+{%- macro _delete(key, tree) -%}
+  delete {{ tree | join(' ') }} {{ key }}
+{%- endmacro -%}
+
+{#- Macro to recursively generate "set" commands for configuration -#}
+{%- macro _set(value, tree) -%}
+  {% if value | type_debug == "dict" -%}
+    {% if value.keys () | count > 0 -%}
+      {% for key in value -%}
+        {#- Recurse through the dictionary -#}
+        {{ _set(value[key], tree + [key]) -}}
+      {% endfor -%}
+    {% else -%}
+      set {{ tree | join(' ') }}
+    {% endif -%}
+  {% elif value | type_debug == "list" -%}
+    {#- Recurse through the list -#}
+    {% for item in value -%}
+      {{ _set(item, tree) -}}
+      set {{ tree | join(' ') }} {{ item }}
+    {% endfor -%}
+  {% elif value is string -%}
+    {#- Set the value with quotes -#}
+    set {{ tree | join(' ') }} '{{ value }}'
+  {% else -%}
+    {#- Set the value -#}
+    set {{ tree | join(' ') }} {{ value }}
+  {% endif -%}
+{%- endmacro -%}
+
+{#- Macro to recursively generate "update" commands for configuration -#}
+{%- macro _update_config(old_value, new_value, tree) -%}
+  {% if old_value | type_debug == "dict" -%}
+    {#- Remove any keys that are no longer required -#}
+    {% for key in old_value | reject('in', new_value) -%}
+      {{ _delete(key, tree) -}}
+    {% endfor -%}
+  {% endif -%}
+  {% if new_value | type_debug == "dict" -%}
+    {% for key in new_value -%}
+      {% if key in old_value -%}
+        {#- Recurse through the dictionary -#}
+        {{ _update_config(old_value[key], new_value[key], tree + [key]) -}}
+      {% else -%}
+        {#- The new key does not exist in the old config, create the config -#}
+        {{ _update_config({}, new_value[key], tree + [key]) -}}
+      {% endif -%}
+    {% endfor -%}
+  {% elif new_value | type_debug == "list" -%}
+    {#- Remove any obsolete list items -#}
+    {% for item in (old_value | reject('in', new_value)) -%}
+      {{ _delete(item, tree) -}}
+    {% endfor -%}
+    {#- Update / add the other list items -#}
+    {% for item in (new_value | reject('in', old_value)) -%}
+      {{ _set(item, tree) -}}
+    {% endfor -%}
+  {% else -%}
+    {#- Update / add the value -#}
+    {% if (new_value | string) != (old_value | string) -%}
+      {{ _set(new_value, tree) -}}
+    {% endif -%}
+  {% endif -%}
+{%- endmacro -%}
+
+{#- Macro to generate configuration commands based on diff between two config objects -#}
+{%- macro generate_config(old_config, new_config, tree) -%}
+  {#- Remove any keys that are no longer required -#}
+  {% for key in old_config | reject('in', new_config) -%}
+    {{ _delete(key, tree) }}
+  {% endfor -%}
+  {#- Generate the configuration commands -#}
+  {% for key in new_config -%}
+    {% if key in old_config -%}
+      {{ _update_config(old_config[key], new_config[key], tree + [key]) -}}
+    {% else -%}
+      {{ _set(new_config[key], tree  + [key]) -}}
+    {% endif -%}
+  {% endfor -%}
+{%- endmacro -%}

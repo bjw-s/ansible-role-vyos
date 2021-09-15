@@ -1,0 +1,6 @@
+---
+- name: managed files | import files tasks
+  ansible.builtin.import_tasks:
+    file: files.yml
+  tags:
+  - vyos_managed_files

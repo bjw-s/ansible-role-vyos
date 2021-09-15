@@ -1,0 +1,46 @@
+---
+# ---------------------
+# System configuration
+# ---------------------
+
+# Configure the device timezone
+# (default: UTC)
+vyos_timezone: UTC
+
+# Configure the device hostname
+# (default: vyos)
+vyos_hostname: vyos
+
+# The domain name to apply to the device
+# (default: local)
+vyos_domain: local
+
+# Set the upstream DNS server to use with the device
+# (default: 1.1.1.1)
+vyos_upstream_dns: 1.1.1.1
+
+# Remote syslog configuration
+vyos_remote_syslog:
+  enabled: false
+  # IP address or hostname of the remote syslog service
+  endpoint:
+  # Port of the remote syslog service
+  port: 1514
+
+# Scheduled task configuration
+vyos_task_scheduler:
+  tasks: {}
+    # example_task:
+    #   crontab: '0 */12 * * *'
+    #   path: /config/scripts/my_script.sh
+
+# ----------------------------
+# Managed files configuration
+# ----------------------------
+
+vyos_managed_files: []
+#  - url: https://www.cloudflare.com/ips-v4
+#    dest: /config/groups/cloudflare-ipv4_networks
+#  - template: my_script.sh.j2
+#    dest: /config/scripts/my_script.sh
+#    mode: "0755"

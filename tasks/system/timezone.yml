@@ -1,0 +1,5 @@
+---
+- name: 'system | configure timezone'
+  vyos.vyos.vyos_config:
+    lines:
+      - set system time-zone {{ vyos_timezone }}

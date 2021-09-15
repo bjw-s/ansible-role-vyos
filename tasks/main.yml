@@ -1,0 +1,12 @@
+---
+- name: import system tasks
+  ansible.builtin.import_tasks:
+    file: system/main.yml
+  tags:
+    - vyos_system
+
+- name: import managed files tasks
+  ansible.builtin.import_tasks:
+    file: managed_files/main.yml
+  tags:
+    - vyos_managed_files

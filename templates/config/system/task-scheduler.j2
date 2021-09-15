@@ -1,0 +1,34 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/config.j2" import generate_config -%}
+
+{#- Collect taks to be managed -#}
+{%- set task_entries = dict() -%}
+
+{#- Tasks from gateway config -#}
+{%- for task_name, task in vyos_task_scheduler['tasks'].items() %}
+  {%- set entry = dict() -%}
+  {%- if task['interval'] is defined -%}
+    {%- set _ = entry.update({'interval': task['interval']}) -%}
+  {%- endif -%}
+
+  {%- if task['crontab'] is defined -%}
+    {%- set _ = entry.update({'crontab-spec': task['crontab']}) -%}
+  {%- endif -%}
+
+  {%- set _ = entry.update({'executable': {}}) -%}
+  {%- set _ = entry['executable'].update({'path': task['path']}) -%}
+
+  {%- if task['args'] is defined -%}
+    {%- set _ = entry['executable'].update({'arguments': task['args']}) -%}
+  {%- endif -%}
+
+  {%- set _ = task_entries.update({task_name: entry}) -%}
+{%- endfor -%}
+
+{#- Process the collected task entries -#}
+{%- if task_entries.keys() | count > 0 -%}
+  {{- generate_config(current_config, task_entries, ['system', 'task-scheduler', 'task']) -}}
+{%- else -%}
+  {#- Remove the entire key if no tasks are found -#}
+  delete system task-scheduler
+{%- endif -%}

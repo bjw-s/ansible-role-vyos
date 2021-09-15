@@ -1,0 +1,6 @@
+---
+- name: 'system | configure system settings'
+  vyos.vyos.vyos_system:
+    host_name: "{{ vyos_hostname }}"
+    domain_name: "{{ vyos_domain }}"
+    name_servers: "{{ vyos_upstream_dns }}"
