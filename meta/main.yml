@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: vyos
+  namespace: bjw-s
+  author: Bernd Schorgers
+  description: Ansible role for setting up a VyOS router
+  company: BJW-S
+  github_branch: main
+
+  license: BSD
+
+  min_ansible_version: '2.11'
+
+  platforms:
+    - name: VyOS
+      versions:
+        - 1.4
+
+  galaxy_tags:
+    - vyos
+
+dependencies: []
