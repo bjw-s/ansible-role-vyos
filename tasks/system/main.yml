@@ -1,17 +1,17 @@
 ---
-- name: 'system | import settings tasks'
+- name: 'system | settings'
   ansible.builtin.import_tasks:
     file: settings.yml
   tags:
     - vyos_system_settings
 
-- name: 'system | import timezone tasks'
+- name: 'system | timezone'
   ansible.builtin.import_tasks:
     file: timezone.yml
   tags:
     - vyos_system_timezone
 
-- name: 'system | import syslog tasks'
+- name: 'system | syslog'
   ansible.builtin.import_tasks:
     file: syslog.yml
   tags:
@@ -19,7 +19,7 @@
   when:
     - vyos_remote_syslog is defined
 
-- name: 'system | import task-scheduler tasks'
+- name: 'system | task-scheduler'
   ansible.builtin.import_tasks:
     file: task-scheduler.yml
   tags:

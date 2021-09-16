@@ -33,14 +33,3 @@ vyos_task_scheduler:
     # example_task:
     #   crontab: '0 */12 * * *'
     #   path: /config/scripts/my_script.sh
-
-# ----------------------------
-# Managed files configuration
-# ----------------------------
-
-vyos_managed_files: []
-#  - url: https://www.cloudflare.com/ips-v4
-#    dest: /config/groups/cloudflare-ipv4_networks
-#  - template: my_script.sh.j2
-#    dest: /config/scripts/my_script.sh
-#    mode: "0755"

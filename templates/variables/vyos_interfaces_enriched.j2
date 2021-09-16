@@ -1,0 +1,21 @@
+{%- import "macros/networks.j2" as networks with context -%}
+
+{%- for interface_name, interface in vyos_interfaces.items() -%}
+    {%- if interface['vlan_id'] is defined -%}
+      {%- set _ = interface.update({'interface_complete': interface['interface'] + '.' + (interface['vlan_id'] | string)}) -%}
+    {%- else -%}
+      {%- set _ = interface.update({'interface_complete': interface['interface']}) -%}
+    {%- endif -%}
+    {%- if interface['ipv4_addr'] is defined -%}
+        {%- set network_name = interface['network'] | default(interface_name) -%}
+        {%- set network = networks.get_network_by_name(network_name) | from_yaml -%}
+        {%- set default_address = networks.get_ipv4_address(network_name, 1, '127.0.0.1') -%}
+        {%- if network -%}
+          {%- set _ = interface.update({'network': network}) -%}
+        {%- endif -%}
+        {%- set ipv4_address = interface['ipv4_addr'] if interface['ipv4_addr'] is string else default_address -%}
+        {%- set _ = interface.update({'ipv4_addr': ipv4_address}) -%}
+    {%- endif -%}
+{%- endfor -%}
+
+{{- vyos_interfaces | from_yaml -}}

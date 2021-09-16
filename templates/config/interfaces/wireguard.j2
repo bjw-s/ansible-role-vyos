@@ -1,0 +1,58 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/config.j2" import generate_config -%}
+
+{#- Collect entries to be managed -#}
+{%- set wireguard_entries = dict() -%}
+
+{# Loop through wireguard servers #}
+{%- if vyos_wireguard['servers'] is not none -%}
+  {%- for server_name, server_config in vyos_wireguard['servers'].items() -%}
+    {#- Create the server -#}
+    {%- set interface_name = server_config['interface'] | default(server_name) -%}
+    {%- set interface = vyos_interfaces_enriched[interface_name] -%}
+
+    {%- set interface_entry = {
+      'address': interface['ipv4_addr'],
+      'description': server_config['description'] | default(server_name),
+      'port': server_config['port'] | default(51820),
+      'private-key': server_config['private-key']
+    } -%}
+
+    {#- Set up the peers -#}
+    {%- for peer in server_config['peers'] -%}
+      {%- set peer_entry = {
+        'public-key': peer['public-key'],
+        'allowed-ips': {}
+      } -%}
+
+      {%- if peer['ipv4_hostid'] is defined -%}
+        {#- Determine the peer IP based on the host ID -#}
+        {%- set ipv4_address = interface['network']['cidr'] | ansible.netcommon.ipv4(peer['ipv4_hostid']) -%}
+        {%- set ipv4_address = ipv4_address | replace('/24', '/32') -%}
+        {%- set _ = peer_entry['allowed-ips'].update({ipv4_address: {}}) -%}
+      {%- endif -%}
+
+      {#- Add any manually specified allowed-ips -#}
+      {%- if peer['allowed_ips'] is defined -%}
+        {%- for ip in peer['allowed_ips'] -%}
+          {%- set _ = peer_entry['allowed-ips'].update({ip: {}}) -%}
+        {%- endfor -%}
+      {%- endif -%}
+
+      {%- if interface_entry['peer'] is undefined -%}
+        {%- set _ = interface_entry.update({'peer': {}}) -%}
+      {%- endif -%}
+      {%- set _ = interface_entry['peer'].update({peer['name']: peer_entry}) -%}
+    {% endfor %}
+
+    {%- set _ = wireguard_entries.update({interface['interface']: interface_entry}) -%}
+  {%- endfor -%}
+{%- endif -%}
+
+{#- Process the collected task entries -#}
+{%- if wireguard_entries.keys() | count > 0 -%}
+  {{- generate_config(current_config, wireguard_entries, ['interfaces', 'wireguard']) -}}
+{%- else -%}
+  {#- Remove the entire key if no tasks are found -#}
+  delete interfaces wireguard
+{%- endif -%}

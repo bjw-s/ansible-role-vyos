@@ -1,0 +1,37 @@
+---
+- name: 'interfaces | physical'
+  ansible.builtin.include_tasks:
+    file: physical.yml
+    apply:
+      tags:
+        - vyos_interfaces_physical
+  tags:
+    - vyos_interfaces_physical
+  when:
+    - vyos_interfaces_enriched is defined
+    - vyos_interfaces_enriched is not none
+
+- name: 'interfaces | vlan'
+  ansible.builtin.include_tasks:
+    file: vlan.yml
+    apply:
+      tags:
+        - vyos_interfaces_vlan
+  tags:
+    - vyos_interfaces_vlan
+  when:
+    - vyos_interfaces_enriched is defined
+    - vyos_interfaces_enriched is not none
+
+- name: 'interfaces | wireguard'
+  ansible.builtin.include_tasks:
+    file: wireguard.yml
+    apply:
+      tags:
+        - vyos_interfaces_wireguard
+  tags:
+    - vyos_interfaces_wireguard
+  when:
+    - vyos_interfaces_enriched is defined
+    - vyos_interfaces_enriched is not none
+    - vyos_wireguard['servers'] is defined

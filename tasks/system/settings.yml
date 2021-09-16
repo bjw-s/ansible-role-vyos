@@ -1,5 +1,5 @@
 ---
-- name: 'system | configure system settings'
+- name: 'system | settings | configure system settings'
   vyos.vyos.vyos_system:
     host_name: "{{ vyos_hostname }}"
     domain_name: "{{ vyos_domain }}"

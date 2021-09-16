@@ -1,0 +1,21 @@
+{% macro get_network_by_name(name) %}
+    {% set all_networks = networks %}
+    {% if local_networks is defined %}
+        {% set all_networks = all_networks + local_networks %}
+    {% endif %}
+    {% set found_networks = all_networks | selectattr('name', 'eq', name) %}
+    {%- if (found_networks | count) >0 -%}
+        {{ found_networks[0] }}
+    {%- endif -%}
+{% endmacro %}
+
+{% macro get_ipv4_address(network_name, host_id, default) %}
+    {%- set network = get_network_by_name(network_name) | from_yaml -%}
+    {%- if network -%}
+        {{- network['cidr'] | ansible.netcommon.ipv4(host_id) -}}
+    {%- else -%}
+        {%- if default is defined -%}
+            {{- default -}}
+        {%- endif -%}
+    {%- endif -%}
+{% endmacro %}

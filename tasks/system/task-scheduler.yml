@@ -1,9 +1,12 @@
 ---
-- name: system | read config json
+- name: system | task scheduler | read config json
   ansible.builtin.include_tasks:
     file: "{{ role_path }}/tasks/_utils/get_config_json.yml"
+    apply:
+      vars:
+        source: "system | task-scheduler"
 
-- name: system | define task-scheduler entries
+- name: system | task-scheduler | define entries
   vars:
     current_config: "{{ vyos_active_config_json['system']['task-scheduler']['task'] | default({}) }}"
   vyos.vyos.vyos_config:

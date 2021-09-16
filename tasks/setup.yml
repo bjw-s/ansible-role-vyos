@@ -1,0 +1,14 @@
+---
+- name: setup | set global variable | vyos_interfaces_enriched
+  ansible.builtin.set_fact:
+    vyos_interfaces_enriched: "{{ lookup('template', 'variables/vyos_interfaces_enriched.j2') }}"
+  when:
+    - vyos_interfaces is defined
+    - vyos_interfaces is not none
+
+- name: setup | set global variable | vyos_address_book_enriched
+  ansible.builtin.set_fact:
+    vyos_address_book_enriched: "{{ lookup('template', 'variables/vyos_address_book_enriched.j2') }}"
+  when:
+    - vyos_address_book is defined
+    - vyos_address_book is not none

@@ -1,0 +1,7 @@
+# -------------------------
+# Interfaces configuration
+# -------------------------
+
+vyos_interfaces:
+
+vyos_wireguard:

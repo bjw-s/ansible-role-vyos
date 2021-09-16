@@ -1,0 +1,32 @@
+---
+- name: interfaces | vlan | configure status and description
+  with_items: "{{ vyos_interfaces_enriched | dict2items }}"
+  vars:
+    interface_name: "{{ item['key'] }}"
+    interface: "{{ item['value'] }}"
+  vyos.vyos.vyos_interfaces:
+    config:
+      - name: "{{ interface['interface'] }}"
+        vifs:
+          - description: "{{ interface['desc'] | default(interface_name | upper) }}"
+            enabled: "{{ interface['enabled'] | default(true) }}"
+            vlan_id: "{{ interface['vlan_id'] }}"
+  when:
+    - interface['vlan_id'] is defined
+    - interface['skip_creation'] is not defined
+
+- name: interfaces | vlan | configure L3 IPv4
+  with_items: "{{ vyos_interfaces_enriched | dict2items }}"
+  vars:
+    interface: "{{ item['value'] }}"
+  vyos_l3_interfaces:
+    config:
+      - name: "{{ interface['interface'] }}"
+        vifs:
+          - vlan_id: "{{ interface['vlan_id'] }}"
+            ipv4:
+              - address: "{{ interface['ipv4_addr'] }}"
+  when:
+    - interface['ipv4_addr'] is defined
+    - interface['vlan_id'] is defined
+    - interface['skip_creation'] is not defined

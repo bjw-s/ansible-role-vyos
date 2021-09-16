@@ -1,0 +1,14 @@
+---
+- name: interfaces | wireguard | read config json
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/_utils/get_config_json.yml"
+    apply:
+      vars:
+        source: "interfaces | wireguard"
+
+- name: interfaces | wireguard | configure
+  vars:
+    current_config: "{{ vyos_active_config_json['interfaces']['wireguard'] | default({}) }}"
+  vyos.vyos.vyos_config:
+    match: line
+    lines: "{{ lookup('template', './config/interfaces/wireguard.j2') }}"

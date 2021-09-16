@@ -1,10 +1,10 @@
 ---
-- name: get_config_json | get active config
+- name: "{{ source | default('get_config_json') }} | get active config"
   vyos.vyos.vyos_command:
     commands: |
       show configuration > /dev/null && /opt/vyatta/sbin/vyatta-cfg-cmd-wrapper show system  | /usr/bin/vyos-config-to-json
   register: active_config
 
-- name: get_config_json | store active config json
+- name: "{{ source | default('get_config_json') }} | store active config json"
   set_fact:
     vyos_active_config_json: "{{ active_config['stdout'][0] }}"

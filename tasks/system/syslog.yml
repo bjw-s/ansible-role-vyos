@@ -1,5 +1,5 @@
 ---
-- name: 'system | configure remote syslog'
+- name: 'system | syslog | configure remote syslog'
   vyos.vyos.vyos_config:
     lines:
       - "set system syslog host {{ vyos_syslog['endpoint'] }} facility all level all"
@@ -12,7 +12,7 @@
     - vyos_syslog['port'] is defined
     - vyos_remote_syslog['enabled']
 
-- name: 'system | remove remote syslog'
+- name: 'system | syslog | remove remote syslog'
   vyos.vyos.vyos_config:
     lines:
       - "delete system syslog host"

@@ -1,0 +1,31 @@
+{%- import "macros/networks.j2" as networks with context -%}
+
+{%- if vyos_address_book['hosts'] is none -%}
+  {%- set _ = vyos_address_book.update({'hosts': {}}) -%}
+{%- else -%}
+  {#- Add the actual ipv4 addresses to any static host mappings that contain host or service references -#}
+  {%- for hostname, host in vyos_address_book['hosts'].items() -%}
+    {%- if host['network'] is defined and host['ipv4_hostid'] is defined -%}
+      {%- set network = networks.get_network_by_name(host['network']) | from_yaml -%}
+      {%- if network -%}
+        {%- set _ = host.update({'ipv4_addr': (networks.get_ipv4_address(host['network'], host['ipv4_hostid']) | ansible.netcommon.ipv4('address'))}) -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+
+{%- if vyos_address_book['static_mappings'] is none -%}
+  {%- set _ = vyos_address_book.update({'static_mappings': {}}) -%}
+{%- else -%}
+  {#- Add the actual ipv4 addresses to any static host mappings that contain host or service references -#}
+  {%- for static_mapping in vyos_address_book['static_mappings'] -%}
+    {%- if static_mapping['host'] is defined -%}
+      {%- set _ = static_mapping.update({'ipv4_addr': vyos_address_book['hosts'][static_mapping['service']]['ipv4_addr'] }) -%}
+    {%- elif static_mapping['service'] is defined -%}
+      {%- set _ = static_mapping.update({'ipv4_addr': vyos_address_book['services'][static_mapping['service']]['ipv4_addr'] }) -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+
+{#- Return the updated address book -#}
+{{- vyos_address_book | from_yaml -}}

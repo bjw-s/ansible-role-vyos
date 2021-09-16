@@ -1,12 +1,24 @@
 ---
-- name: import system tasks
+- name: setup
+  ansible.builtin.import_tasks:
+    file: setup.yml
+  tags:
+    - always
+
+- name: system
   ansible.builtin.import_tasks:
     file: system/main.yml
   tags:
     - vyos_system
 
-- name: import managed files tasks
+- name: managed files
   ansible.builtin.import_tasks:
     file: managed_files/main.yml
   tags:
     - vyos_managed_files
+
+- name: interfaces
+  ansible.builtin.import_tasks:
+    file: interfaces/main.yml
+  tags:
+    - vyos_interfaces
