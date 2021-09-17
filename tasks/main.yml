@@ -28,3 +28,9 @@
     file: routing/main.yml
   tags:
     - vyos_routing
+
+- name: nat
+  ansible.builtin.import_tasks:
+    file: nat/main.yml
+  tags:
+    - vyos_nat

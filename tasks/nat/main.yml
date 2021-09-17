@@ -1,0 +1,14 @@
+---
+- name: nat | read config json
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/_utils/get_config_json.yml"
+    apply:
+      vars:
+        source: "nat"
+
+- name: nat | configure
+  vars:
+    current_config: "{{ vyos_active_config_json['nat'] | default({}) }}"
+  vyos.vyos.vyos_config:
+    match: none
+    lines: "{{ lookup('template', './config/nat/nat.j2') }}"

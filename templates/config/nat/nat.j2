@@ -1,0 +1,78 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/config.j2" import generate_config -%}
+
+{%- set rulecounter = {'source': 1, 'destination':1} -%}
+
+{#- Collect config to be managed -#}
+{%- set nat_config = dict() -%}
+
+{#- Configure nat rules -#}
+{%- for rule in vyos_nat['rules'] -%}
+  {%- set interface = vyos_interfaces_enriched[rule['interface']] -%}
+  {%- set rule_entry = dict() -%}
+
+  {#- Configure NAT direction -#}
+  {%- if rule['type'] == 'snat' -%}
+    {%- set direction = 'source' -%}
+    {%- set _ = rule_entry.update({
+      'outbound-interface': interface['interface_complete']
+    }) -%}
+  {%- elif rule['type'] == 'dnat' -%}
+    {%- set direction = 'destination' -%}
+    {%- set _ = rule_entry.update({
+      'inbound-interface': interface['interface_complete']
+    }) -%}
+  {%- endif -%}
+
+  {#- Configure Rule -#}
+  {%- if rule['protocol'] is defined -%}
+    {%- set _ = rule_entry.update({
+      'protocol': rule['protocol']
+    }) -%}
+  {%- endif -%}
+
+  {%- if rule['source'] is defined -%}
+    {%- set _ = rule_entry.update({'destination': {}}) -%}
+    {%- if rule['source']['address'] is defined -%}
+      {%- set _ = rule_entry['destination'].update({
+        'address': rule['source']['address']
+      }) -%}
+    {%- endif -%}
+    {%- if rule['source']['port'] is defined -%}
+      {%- set _ = rule_entry['destination'].update({
+        'port': rule['source']['port']
+      }) -%}
+    {%- endif -%}
+  {%- endif -%}
+
+  {%- if rule['destination'] is defined -%}
+    {%- set _ = rule_entry.update({'translation': {}}) -%}
+    {%- if rule['destination']['address'] is defined -%}
+      {%- set _ = rule_entry['translation'].update({
+        'address': rule['destination']['address']
+      }) -%}
+    {%- endif -%}
+    {%- if rule['destination']['port'] is defined -%}
+      {%- set _ = rule_entry['translation'].update({
+        'port': rule['destination']['port']
+      }) -%}
+    {%- endif -%}
+  {%- endif -%}
+
+  {#- Append the rule to the config -#}
+  {%- if nat_config[direction]['rule'] is undefined -%}
+    {%- set _ = nat_config.update({direction: {'rule': {}}}) -%}
+  {%- endif -%}
+  {%- set _ = nat_config[direction]['rule'].update({
+    (rulecounter[direction] | string): rule_entry
+  }) -%}
+  {% set _ = rulecounter.update({direction: rulecounter[direction] + 1}) %}
+{%- endfor -%}
+
+{#- Process the collected config entries -#}
+{%- if nat_config.keys() | count > 0 -%}
+  {{- generate_config(current_config, nat_config, ['nat']) -}}
+{%- else -%}
+  {#- Remove the entire key if no config is found -#}
+  delete nat
+{%- endif -%}
