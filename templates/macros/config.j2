@@ -69,7 +69,7 @@
 {%- macro generate_config(old_config, new_config, tree) -%}
   {#- Remove any keys that are no longer required -#}
   {% for key in old_config | reject('in', new_config) -%}
-    {{ _delete(key, tree) }}
+    {{ _delete(key, tree) -}}
   {% endfor -%}
   {#- Generate the configuration commands -#}
   {% for key in new_config -%}
