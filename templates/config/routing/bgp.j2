@@ -1,0 +1,97 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/config.j2" import generate_config -%}
+
+{#- Collect config to be managed -#}
+{%- set bgp_config = dict() -%}
+
+{#- Configure BGP protocol -#}
+{%- if vyos_bgp['enabled'] -%}
+  {#- Configure basic settings settings -#}
+  {%- set _ = bgp_config.update({
+    'local-as': vyos_bgp['local_as'],
+    'parameters': {
+      'router-id': vyos_bgp['router_id'],
+      'default': {
+        'no-ipv4-unicast': {}
+      }
+    }
+  }) -%}
+
+  {%- if vyos_bgp['redistribute'] is defined -%}
+    {%- set _ = bgp_config.update({'address-family': {}}) -%}
+    {%- if vyos_bgp['redistribute']['ospf'] is defined -%}
+      {%- set _ = bgp_config['address-family'].update({
+        'ipv4-unicast': {
+          'redistribute': 'ospf'
+        }
+      }) -%}
+    {%- endif -%}
+    {%- if vyos_bgp['redistribute']['ospfv3'] is defined -%}
+      {%- set _ = bgp_config['address-family'].update({
+        'ipv6-unicast': {
+          'redistribute': 'ospfv3'
+        }
+      }) -%}
+    {%- endif -%}
+  {%- endif -%}
+
+  {#- Collect BGP neighbors -#}
+  {%- set bgp_neighbors_ipv4 = [] -%}
+  {%- for bgp_neighbor_group in vyos_bgp['neighbor_groups'] -%}
+    {%- for hostname, host in vyos_address_book_enriched['hosts'].items() -%}
+      {%- if host['groups'] is defined and bgp_neighbor_group['group'] in host['groups'] -%}
+        {%- set tmp_object = {} -%}
+        {%- set _ = tmp_object.update({'peer': host['ipv4_addr']}) -%}
+        {%- set _ = tmp_object.update({'desc': hostname}) -%}
+        {%- set _ = tmp_object.update(bgp_neighbor_group) -%}
+        {%- set bgp_neighbors_ipv4 = bgp_neighbors_ipv4.append(tmp_object) -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endfor -%}
+
+  {%- if vyos_bgp['neighbors'] is defined -%}
+    {%- set bgp_neighbors_ipv4 = [bgp_neighbors_ipv4 + vyos_bgp['neighbors']] -%}
+  {%- endif -%}
+
+  {#- Configure BGP neighbors -#}
+  {%- for neighbor in bgp_neighbors_ipv4 -%}
+    {%- set neighbor_entry = {
+      'remote-as': neighbor['remote_as'],
+      'address-family': {
+        'ipv4-unicast': {}
+      },
+      'description': neighbor['desc']
+    } -%}
+
+    {%- if neighbor['loc_ip'] is defined -%}
+      {%- set _ = neighbor_entry.update({'update-source': neighbor['locl_ip']}) -%}
+    {%- endif -%}
+    {%- if neighbor['default_originate'] is defined -%}
+      {%- set _ = neighbor_entry['address-family']['ipv4-unicast'].update({'default-originate': {}}) -%}
+    {%- endif -%}
+    {%- if neighbor['route_map'] is defined -%}
+      {%- set _ = neighbor_entry['address-family']['ipv4-unicast'].update({'route-map': {}}) -%}
+      {%- if neighbor['route_map']['in'] is defined -%}
+        {%- set _ = neighbor_entry['address-family']['ipv4-unicast']['route-map'].update({'import': neighbor['route_map']['in']}) -%}
+      {%- endif -%}
+      {%- if neighbor['route_map']['out'] is defined -%}
+        {%- set _ = neighbor_entry['address-family']['ipv4-unicast']['route-map'].update({'export': neighbor['route_map']['out']}) -%}
+      {%- endif -%}
+    {%- endif -%}
+
+    {%- if bgp_config['neighbor'] is undefined -%}
+      {%- set _ = bgp_config.update({'neighbor': {}}) -%}
+    {%- endif -%}
+    {%- set _ = bgp_config['neighbor'].update({neighbor['peer']: neighbor_entry}) -%}
+  {%- endfor -%}
+
+  {#- Process the collected config entries -#}
+  {%- if bgp_config.keys() | count > 0 -%}
+    {{- generate_config(current_config, bgp_config, ['protocols', 'bgp']) -}}
+  {%- else -%}
+    {#- Remove the entire key if no config is found -#}
+    delete protocols bgp
+  {%- endif -%}
+{%- else -%}
+delete protocols bgp
+{%- endif -%}

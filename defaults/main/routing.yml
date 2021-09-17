@@ -1,0 +1,10 @@
+---
+# ----------------------
+# Routing configuration
+# ----------------------
+
+vyos_bgp:
+  enabled: false
+  local_as:
+  router_id:
+  neighbour_groups: []

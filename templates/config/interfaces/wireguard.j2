@@ -2,7 +2,7 @@
 {%- from "macros/config.j2" import generate_config -%}
 
 {#- Collect entries to be managed -#}
-{%- set wireguard_entries = dict() -%}
+{%- set wireguard_config = dict() -%}
 
 {# Loop through wireguard servers #}
 {%- if vyos_wireguard['servers'] is not none -%}
@@ -45,14 +45,14 @@
       {%- set _ = interface_entry['peer'].update({peer['name']: peer_entry}) -%}
     {% endfor %}
 
-    {%- set _ = wireguard_entries.update({interface['interface']: interface_entry}) -%}
+    {%- set _ = wireguard_config.update({interface['interface']: interface_entry}) -%}
   {%- endfor -%}
 {%- endif -%}
 
-{#- Process the collected task entries -#}
-{%- if wireguard_entries.keys() | count > 0 -%}
-  {{- generate_config(current_config, wireguard_entries, ['interfaces', 'wireguard']) -}}
+{#- Process the collected config entries -#}
+{%- if wireguard_config.keys() | count > 0 -%}
+  {{- generate_config(current_config, wireguard_config, ['interfaces', 'wireguard']) -}}
 {%- else -%}
-  {#- Remove the entire key if no tasks are found -#}
+  {#- Remove the entire key if no config is found -#}
   delete interfaces wireguard
 {%- endif -%}

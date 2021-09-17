@@ -22,3 +22,9 @@
     file: interfaces/main.yml
   tags:
     - vyos_interfaces
+
+- name: routing
+  ansible.builtin.import_tasks:
+    file: routing/main.yml
+  tags:
+    - vyos_routing

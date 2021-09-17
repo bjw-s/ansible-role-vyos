@@ -1,0 +1,6 @@
+---
+- name: routing | bgp
+  ansible.builtin.import_tasks:
+    file: bgp.yml
+  tags:
+  - vyos_routing_bgp

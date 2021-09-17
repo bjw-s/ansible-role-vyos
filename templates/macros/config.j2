@@ -2,7 +2,7 @@
 {#- Macro to generate "delete" commands for configuration -#}
 {%- macro _delete(key, tree) -%}
   delete {{ tree | join(' ') }} {{ key }}
-{%- endmacro -%}
+{% endmacro -%}
 
 {#- Macro to recursively generate "set" commands for configuration -#}
 {%- macro _set(value, tree) -%}

@@ -1,0 +1,14 @@
+---
+- name: routing | bgp | read config json
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/_utils/get_config_json.yml"
+    apply:
+      vars:
+        source: "routing | bgp"
+
+- name: routing | bgp | configure
+  vars:
+    current_config: "{{ vyos_active_config_json['protocols']['bgp'] | default({}) }}"
+  vyos.vyos.vyos_config:
+    match: line
+    lines: "{{ lookup('template', './config/routing/bgp.j2') }}"
