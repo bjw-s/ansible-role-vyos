@@ -1,0 +1,38 @@
+---
+- name: firewall | allow all local ICMP
+  vyos.vyos.vyos_config:
+    lines:
+      - set firewall all-ping enable
+
+- name: firewall | network-groups
+  ansible.builtin.import_tasks:
+    file: network-groups.yml
+  tags:
+    - vyos_firewall_groups
+    - vyos_firewall_network_groups
+
+- name: firewall | address-groups
+  ansible.builtin.import_tasks:
+    file: address-groups.yml
+  tags:
+    - vyos_firewall_groups
+    - vyos_firewall_address_groups
+
+- name: firewall | port-groups
+  ansible.builtin.import_tasks:
+    file: port-groups.yml
+  tags:
+    - vyos_firewall_groups
+    - vyos_firewall_port_groups
+
+- name: firewall | rules
+  ansible.builtin.import_tasks:
+    file: rules.yml
+  tags:
+    - vyos_firewall_rules
+
+- name: firewall | zones
+  ansible.builtin.import_tasks:
+    file: zones.yml
+  tags:
+    - vyos_firewall_zones

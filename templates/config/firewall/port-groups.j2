@@ -1,0 +1,15 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+
+{#- Collect port groups to be managed -#}
+{%- set port_groups = [] -%}
+
+{#- Collect port groups from gateway config -#}
+{%- for group in vyos_firewall_port_groups -%}
+  {%- set port_group = {'name': group['name'], 'members': []} -%}
+  {%- for port in group['ports'] -%}
+    {%- set _ = port_group['members'].append({'port': port}) -%}
+  {%- endfor -%}
+  {%- set port_groups = port_groups.append(port_group) -%}
+{%- endfor -%}
+
+{{- port_groups | to_yaml -}}

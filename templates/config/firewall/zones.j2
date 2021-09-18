@@ -1,0 +1,57 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/config.j2" import generate_config -%}
+
+{#- Collect zones to be managed -#}
+{%- set zone_entries = dict() -%}
+
+{#- Build the configuration object -#}
+{%- for zone in vyos_firewall_zones -%}
+  {%- set entry = dict() -%}
+  {%- set _ = entry.update({'default-action': 'drop'}) -%}
+  {%- set _ = entry.update({'description': zone['description']}) -%}
+
+  {% if zone['fw_policies'] is defined -%}
+    {%- for policy in zone['fw_policies'] %}
+      {% if policy['includeZones'] is defined -%}
+        {%- set fromZones = policy['includeZones'] -%}
+      {% elif policy['ignoreZones'] is defined -%}
+        {%- set fromZones = (vyos_firewall_zones | map(attribute='name') | list) | reject("eq", zone['name']) | reject("in", policy['ignoreZones']) -%}
+      {% else -%}
+        {%- set fromZones = (vyos_firewall_zones | map(attribute='name') | list) | reject("eq", zone['name']) -%}
+      {% endif -%}
+
+      {%- for fromZone in fromZones -%}
+        {%- if entry['from'] is undefined -%}
+          {%- set _ = entry.update({'from': {}}) -%}
+        {%- endif -%}
+        {%- set _ = entry['from'].update({fromZone: {'firewall': {'name': fromZone + '-' + zone['name']}} }) -%}
+      {% endfor -%}
+    {% endfor -%}
+
+  {%- if zone['local'] is defined and zone['local'] -%}
+    {%- set _ = entry.update({'local-zone': {}}) -%}
+  {%- else -%}
+    {% if (zone['interfaces'] | count) == 1 -%}
+      {%- set interface = vyos_interfaces_enriched[zone['interfaces'][0]] -%}
+      {%- set _ = entry.update({'interface': interface['interface_complete'] }) -%}
+    {% elif (zone['interfaces'] | count) > 1 -%}
+      {%- set interfaces = [] %}
+      {%- for zone_interface in zone['interfaces'] -%}
+        {%- set interface = vyos_interfaces_enriched[zone_interface] -%}
+        {%- set interfaces = interfaces.append(interface['interface_complete']) -%}
+      {% endfor -%}
+      {%- set _ = entry.update({'interface': interfaces}) -%}
+    {%- endif -%}
+  {%- endif -%}
+  {% endif -%}
+
+  {%- set _ = zone_entries.update({zone['name']: entry}) -%}
+{%- endfor -%}
+
+{#- Process the collected zones -#}
+{%- if zone_entries.keys() | count > 0 -%}
+  {{- generate_config(current_zone_entries, zone_entries, ['zone-policy', 'zone']) -}}
+{%- else -%}
+  {# Remove the entire key if no zones are found #}
+  delete zone-policy
+{%- endif -%}

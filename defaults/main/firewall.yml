@@ -1,0 +1,15 @@
+---
+# -----------------------
+# Firewall configuration
+# -----------------------
+
+vyos_firewall_address_groups: []
+
+vyos_firewall_network_groups: []
+
+vyos_firewall_port_groups: []
+
+vyos_firewall_zones: []
+
+vyos_firewall_global_rules: {}
+vyos_firewall_rules: {}

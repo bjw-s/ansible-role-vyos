@@ -34,3 +34,9 @@
     file: nat/main.yml
   tags:
     - vyos_nat
+
+- name: firewall
+  ansible.builtin.import_tasks:
+    file: firewall/main.yml
+  tags:
+    - vyos_firewall

@@ -1,0 +1,44 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+
+{#- Store remote file contents in variable -#}
+{%- set files = {} -%}
+{%- for result in network_group_files -%}
+  {%-
+    set _ = files.update({
+      result['item']['name']: {
+        'filename': result['item']['from_file'],
+        'content_b64': result['content']
+      }
+    })
+  -%}
+{%- endfor -%}
+
+{#- Collect network groups to be managed -#}
+{%- set network_groups = [] -%}
+
+{#- Collect network groups from gateway config -#}
+{%- for group in vyos_firewall_network_groups -%}
+  {%- set network_groups = network_groups.append({'name': group['name'], 'members': []}) -%}
+{%- endfor -%}
+
+{#- Add networks to network groups -#}
+{%- for network_group in network_groups -%}
+  {#- Collect networks from gateway config -#}
+  {%- for firewall_network_group in vyos_firewall_network_groups | selectattr('name', 'eq', network_group['name']) -%}
+    {%- if firewall_network_group['from_file'] is defined -%}
+      {#- Collect the networks from the file content -#}
+      {%- set networks = files[firewall_network_group['name']].content_b64 | b64decode | split('\n') -%}
+    {%- else -%}
+      {#- Set the networks from the config -#}
+      {%- set networks = firewall_network_group['networks'] -%}
+    {%- endif -%}
+    {#- Add the collected networks -#}
+    {%- for network in networks -%}
+      {%- if network -%}
+        {%- set _ = network_group['members'].append({'address': network}) -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endfor -%}
+{%- endfor -%}
+
+{{- network_groups | to_yaml -}}

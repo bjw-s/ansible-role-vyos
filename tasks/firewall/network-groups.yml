@@ -1,0 +1,37 @@
+---
+- name: firewall | network-groups | switch to ssh connection
+  set_fact:
+    ansible_connection: ssh
+
+- name: firewall | network-groups | get file contents from remote
+  ansible.builtin.slurp:
+    src: "{{ item['from_file'] }}"
+  with_items:
+    - "{{ vyos_firewall_network_groups }}"
+  when:
+    - item['from_file'] is defined
+  register: firewall_remote_network_files
+
+- name: firewall | network-groups | switch to network_cli connection
+  set_fact:
+    ansible_connection: ansible.netcommon.network_cli
+
+- name: firewall | network-groups | store vyos_managed_network_groups
+  vars:
+    network_group_files: "{{ firewall_remote_network_files['results'] | rejectattr('skipped', 'defined') }}"
+  ansible.builtin.set_fact:
+    vyos_managed_network_groups: "{{ lookup('template', './config/firewall/network-groups.j2') | from_yaml }}"
+
+- name: firewall | network-groups | get current firewall configuration
+  vyos.vyos.vyos_firewall_global:
+    config:
+    state: gathered
+  register: vyos_firewall_current_config
+
+- name: firewall | network-groups | configure
+  vars:
+    config: "{{ vyos_firewall_current_config['gathered'].copy() }}"
+    firewall_groups: "{{ {'network_group': vyos_managed_network_groups} }}"
+  vyos.vyos.vyos_firewall_global:
+    config: "{{ lookup('template', './config/firewall/firewall-groups.j2') | from_yaml }}"
+    state: replaced

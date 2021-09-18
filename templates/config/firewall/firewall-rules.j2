@@ -1,0 +1,56 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/firewall_rule.j2" import fw_rule with context -%}
+
+{#- Collect firewall rulesets to be managed -#}
+{%- set firewall_rulesets_ipv4 = [] -%}
+
+{#- IPv4: Generate zone rules -#}
+{%- for zone in vyos_firewall_zones | selectattr('fw_policies', 'defined') -%}
+    {%- for policy in zone['fw_policies'] -%}
+      {#- Select zones for the rule set -#}
+      {%- if policy['includeZones'] is defined -%}
+          {%- set fromZones = policy['includeZones'] -%}
+      {%- elif policy['ignoreZones'] is defined -%}
+          {%- set fromZones = (vyos_firewall_zones | map(attribute='name') | list) | reject("eq", zone['name']) | reject("in", policy['ignoreZones']) -%}
+      {%- else -%}
+          {%- set fromZones = (vyos_firewall_zones | map(attribute='name') | list) | reject("eq", zone['name']) -%}
+      {%- endif -%}
+
+      {#- Iterate over zone combinations -#}
+      {%- for fromZone in fromZones -%}
+        {%- set firewall_ruleset = {
+          'name': fromZone + '-' + zone['name'],
+          'description': 'From ' + fromZone + ' to ' + zone['name'],
+          'default_action': policy['default'],
+          'enable_default_log': (policy['defaultLog'] | default(true)),
+          'rules': []
+        } -%}
+
+        {#- Create rules -#}
+        {%- if policy['rules'] is defined -%}
+            {%- set ns = namespace(counter = 1) -%}
+            {%- for rule in policy['rules'] -%}
+                {%- for ruleName, ruleArgs in rule.items() -%}
+                  {%- if ruleName in zone_rules.keys() -%}
+                    {%- set rule = {
+                      'number': ns.counter,
+                      'description': 'Rule: ' + ruleName
+                    } -%}
+                    {%-
+                      set rule = rule | combine(
+                        fw_rule(ruleName, firewall_ruleset['name'], ns.counter) | from_yaml
+                      )
+                    -%}
+                    {%- set _ = firewall_ruleset['rules'].append(rule) -%}
+                    {%- set ns.counter = ns.counter + 1 -%}
+                  {%- endif -%}
+                {%- endfor -%}
+            {%- endfor -%}
+        {%- endif -%}
+
+        {%- set firewall_rulesets_ipv4 = firewall_rulesets_ipv4.append(firewall_ruleset) -%}
+      {%- endfor -%}
+    {%- endfor -%}
+{%- endfor -%}
+
+{{- firewall_rulesets_ipv4 | to_yaml -}}

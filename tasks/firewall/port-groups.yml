@@ -1,0 +1,18 @@
+---
+- name: firewall | port-groups | store vyos_managed_port_groups
+  ansible.builtin.set_fact:
+    vyos_managed_port_groups: "{{ lookup('template', './config/firewall/port-groups.j2') | from_yaml }}"
+
+- name: firewall | port-groups | get current firewall configuration
+  vyos.vyos.vyos_firewall_global:
+    config:
+    state: gathered
+  register: vyos_firewall_current_config
+
+- name: firewall | port-groups | configure
+  vars:
+    config: "{{ vyos_firewall_current_config['gathered'].copy() }}"
+    firewall_groups: "{{ {'port_group': vyos_managed_port_groups} }}"
+  vyos.vyos.vyos_firewall_global:
+    config: "{{ lookup('template', './config/firewall/firewall-groups.j2') | from_yaml }}"
+    state: replaced

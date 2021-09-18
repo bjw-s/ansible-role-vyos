@@ -1,0 +1,64 @@
+---
+accept_established:
+  action: accept
+  state:
+    established: true
+
+accept_related:
+  action: accept
+  state:
+    related: true
+
+drop_invalid:
+  action: drop
+  state:
+    invalid: true
+
+accept_icmp:
+  action: accept
+  protocol: icmp
+
+accept_igmp:
+  action: accept
+  protocol: 2
+
+accept_dns:
+  action: accept
+  protocol: tcp_udp
+  destination:
+    port: domain
+
+accept_bgp:
+  action: accept
+  protocol: tcp
+  destination:
+    port: bgp
+
+accept_ssh:
+  action: accept
+  log: true
+  protocol: tcp
+  destination:
+    port: ssh
+
+accept_ntp:
+  action: accept
+  protocol: udp
+  destination:
+    port: ntp
+
+accept_dhcp:
+  action: accept
+  protocol: udp
+  source:
+    port: 67,68
+  destination:
+    port: 67,68
+
+accept_mdns:
+  action: accept
+  protocol: udp
+  source:
+    port: mdns
+  destination:
+    port: mdns

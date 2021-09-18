@@ -1,0 +1,57 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+
+{#- Store remote file contents in variable -#}
+{%- set files = {} -%}
+{%- for result in address_group_files -%}
+  {%-
+    set _ = files.update({
+      result['item']['name']: {
+        'filename': result['item']['from_file'],
+        'content_b64': result['content']
+      }
+    })
+  -%}
+{%- endfor -%}
+
+{#- Collect address groups to be managed -#}
+{%- set address_groups = [] -%}
+
+{#- Collect address groups to be managed from address-book hosts -#}
+{%- for group in vyos_address_book['hosts'].values() | selectattr('groups', 'defined') | map(attribute='groups') | flatten | unique -%}
+  {%- set address_groups = address_groups.append({'name': group, 'members': []}) -%}
+{%- endfor -%}
+
+{#- Collect address groups from gateway config -#}
+{%- for group in vyos_firewall_address_groups -%}
+  {%- set address_groups = address_groups.append({'name': group['name'], 'members': []}) -%}
+{%- endfor -%}
+
+{#- Collect address groups for services -#}
+{%- for name, service in vyos_address_book['services'].items() -%}
+  {%- set address_groups = address_groups.append({'name': name, 'members': [{'address': service['ipv4_addr']}]}) -%}
+{%- endfor -%}
+
+{#- Add addresses to address groups -#}
+{%- for address_group in address_groups -%}
+  {#- Collect addresses from address-book hosts -#}
+  {%- for host in vyos_address_book['hosts'].values() | selectattr('ipv4_addr', 'defined') | selectattr('groups', 'defined') | selectattr('groups', 'contains', address_group['name']) -%}
+    {%- set _ = address_group['members'].append({'address': host['ipv4_addr']}) -%}
+  {%- endfor -%}
+
+  {#- Collect addresses from gateway config -#}
+  {%- for firewall_address_group in vyos_firewall_address_groups | selectattr('name', 'eq', address_group['name']) -%}
+    {%- if firewall_address_group['from_file'] is defined -%}
+      {#- Collect the addresses from the file content -#}
+      {%- set addresses = files[firewall_address_group['name']].content_b64 | b64decode | split('\n') -%}
+    {%- else -%}
+      {#- Set the addresses from the config -#}
+      {%- set addresses = firewall_address_group['addresses'] -%}
+    {%- endif -%}
+    {#- Add the collected addresses -#}
+    {%- for address in addresses -%}
+      {%- set _ = address_group['members'].append({'address': address}) -%}
+    {%- endfor -%}
+  {%- endfor -%}
+{%- endfor -%}
+
+{{- address_groups | to_yaml -}}

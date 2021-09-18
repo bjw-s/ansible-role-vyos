@@ -1,0 +1,14 @@
+---
+- name: firewall | zones | read config json
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/_utils/get_config_json.yml"
+    apply:
+      vars:
+        source: "firewall | zones"
+
+- name: firewall | zones | configure
+  vars:
+    current_zone_entries: "{{ vyos_active_config['zone-policy']['zone'] | default({}) }}"
+  vyos.vyos.vyos_config:
+    match: line
+    lines: "{{ lookup('template', './config/firewall/zones.j2') }}"

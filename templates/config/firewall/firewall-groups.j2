@@ -1,0 +1,15 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+
+{%- if not config -%}
+  {%- set config = dict() -%}
+{%- endif -%}
+
+{%- if config['group'] is undefined -%}
+  {%- set _ = config.update({'group': dict()}) -%}
+{%- endif -%}
+
+{%- for key, values in firewall_groups.items() -%}
+  {%- set _ = config['group'].update({key: values}) -%}
+{%- endfor -%}
+
+{{- config | to_yaml -}}

@@ -1,0 +1,18 @@
+---
+- name: firewall | rules | read built-in rules
+  include_vars:
+    file: "{{ role_path }}/files/firewall/builtin_rules.yml"
+    name: vyos_firewall_builtin_rules
+
+- name: firewall | rules | store ipv4 rulesets
+  vars:
+    zone_rules: "{{ vyos_firewall_builtin_rules | combine(vyos_firewall_rules) }}"
+  ansible.builtin.set_fact:
+    vyos_managed_firewall_rulesets_ipv4: "{{ lookup('template', './config/firewall/firewall-rules.j2') | from_yaml }}"
+
+- name: firewall | rules | configure ipv4
+  vyos.vyos.vyos_firewall_rules:
+    config:
+    - afi: ipv4
+      rule_sets: "{{ vyos_managed_firewall_rulesets_ipv4 }}"
+    state: replaced

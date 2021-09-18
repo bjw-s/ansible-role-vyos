@@ -1,0 +1,68 @@
+{# Template that generates firewall rules #}
+{%- macro fw_rule(rule, name, number) -%}
+  {% set rule_config = zone_rules[rule] %}
+  {%- set output = {'action': rule_config['action']} -%}
+
+  {# Enable any configured states #}
+  {% if rule_config['state']is defined %}
+    {%- set _ = output.update({'state': {}})-%}
+    {% for state in rule_config['state'].keys() %}
+      {% if rule_config['state'][state] %}
+        {%- set _ = output['state'].update({state: true}) -%}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {% if rule_config['protocol'] is defined %}
+    {%- set _ = output.update({'protocol': rule_config['protocol']}) -%}
+  {% endif %}
+
+  {# Render the source section #}
+  {% if rule_config['source'] is defined %}
+    {%- set _ = output.update({'source': (_matchers('source', rule_config['source']) | from_yaml)}) -%}
+  {% endif %}
+
+  {# Render the destination section #}
+  {% if rule_config['destination'] is defined %}
+    {%- set _ = output.update({'destination': (_matchers('destination', rule_config['destination']) | from_yaml)}) -%}
+  {% endif %}
+
+  {{- output | to_yaml -}}
+{%- endmacro %}
+
+{#- Macro that generates the rule matchers for a certain traffic direction -#}
+{%- macro _matchers(direction, matcher) -%}
+  {%- set matcher_output = {} -%}
+
+  {% if matcher['port'] is defined %}
+    {%- set _ = matcher_output.update({'port': matcher['port']}) -%}
+  {% endif %}
+
+  {% if matcher['host'] is defined %}
+    {%- set host = vyos_address_book['hosts'][matcher['host']] -%}
+    {%- set _ = matcher_output.update({'address': host['ipv4_addr']}) -%}
+  {% endif %}
+
+  {% if matcher['service'] is defined %}
+    {% set service = vyos_address_book['services'][matcher['host']] %}
+    {%- set _ = matcher_output.update({'address': service['ipv4_addr']}) -%}
+  {% endif %}
+
+  {% if matcher['address'] is defined %}
+    {%- set _ = matcher_output.update({'address': matcher['address']}) -%}
+  {% endif %}
+
+  {% if matcher['address-group'] is defined %}
+    {%- set _ = matcher_output.update({'group': {'address_group': matcher['address-group']}}) -%}
+  {% endif %}
+
+  {% if matcher['network-group'] is defined %}
+    {%- set _ = matcher_output.update({'group': {'network_group': matcher['network-group']}}) -%}
+  {% endif %}
+
+  {% if matcher['port-group'] is defined %}
+    {%- set _ = matcher_output.update({'group': {'port_group': matcher['port-group']}}) -%}
+  {% endif %}
+
+  {{- matcher_output | to_yaml -}}
+{%- endmacro %}
