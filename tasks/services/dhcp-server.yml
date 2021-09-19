@@ -1,0 +1,14 @@
+---
+- name: services | dhcp-server | read config json
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/_utils/get_config_json.yml"
+    apply:
+      vars:
+        source: "services | dhcp-server"
+
+- name: services | dhcp-server | configure
+  vars:
+    current_config: "{{ vyos_active_config_json['service']['dhcp-server'] | default({}) }}"
+  vyos.vyos.vyos_config:
+    match: line
+    lines: "{{ lookup('template', './config/services/dhcp-server.j2') }}"

@@ -40,3 +40,9 @@
     file: firewall/main.yml
   tags:
     - vyos_firewall
+
+- name: services
+  ansible.builtin.import_tasks:
+    file: services/main.yml
+  tags:
+    - vyos_services

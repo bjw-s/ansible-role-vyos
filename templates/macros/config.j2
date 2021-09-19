@@ -1,32 +1,38 @@
 #jinja2: lstrip_blocks: "True", trim_blocks: "True"
 {#- Macro to generate "delete" commands for configuration -#}
 {%- macro _delete(key, tree) -%}
-  delete {{ tree | join(' ') }} {{ key }}
+  {% if key | type_debug == "NoneType" -%}
+    delete {{ (tree | join(' ')) }}
+  {% else -%}
+    delete {{ tree | join(' ') }} {{ key }}
+  {% endif -%}
 {% endmacro -%}
 
 {#- Macro to recursively generate "set" commands for configuration -#}
 {%- macro _set(value, tree) -%}
-  {% if value | type_debug == "dict" -%}
-    {% if value.keys () | count > 0 -%}
-      {% for key in value -%}
-        {#- Recurse through the dictionary -#}
-        {{ _set(value[key], tree + [key]) -}}
+  {% if value | type_debug != "NoneType" -%}
+    {% if value | type_debug == "dict" -%}
+      {% if value.keys () | count > 0 -%}
+        {% for key in value -%}
+          {#- Recurse through the dictionary -#}
+          {{ _set(value[key], tree + [key]) -}}
+        {% endfor -%}
+      {% else -%}
+        set {{ tree | join(' ') }}
+      {% endif -%}
+    {% elif value | type_debug == "list" -%}
+      {#- Recurse through the list -#}
+      {% for item in value -%}
+        {{ _set(item, tree) -}}
+        set {{ tree | join(' ') }} {{ item }}
       {% endfor -%}
+    {% elif value is string -%}
+      {#- Set the value with quotes -#}
+      set {{ tree | join(' ') }} '{{ value }}'
     {% else -%}
-      set {{ tree | join(' ') }}
+      {#- Set the value -#}
+      set {{ tree | join(' ') }} {{ value }}
     {% endif -%}
-  {% elif value | type_debug == "list" -%}
-    {#- Recurse through the list -#}
-    {% for item in value -%}
-      {{ _set(item, tree) -}}
-      set {{ tree | join(' ') }} {{ item }}
-    {% endfor -%}
-  {% elif value is string -%}
-    {#- Set the value with quotes -#}
-    set {{ tree | join(' ') }} '{{ value }}'
-  {% else -%}
-    {#- Set the value -#}
-    set {{ tree | join(' ') }} {{ value }}
   {% endif -%}
 {%- endmacro -%}
 
@@ -38,29 +44,33 @@
       {{ _delete(key, tree) -}}
     {% endfor -%}
   {% endif -%}
-  {% if new_value | type_debug == "dict" -%}
-    {% for key in new_value -%}
-      {% if key in old_value -%}
-        {#- Recurse through the dictionary -#}
-        {{ _update_config(old_value[key], new_value[key], tree + [key]) -}}
-      {% else -%}
-        {#- The new key does not exist in the old config, create the config -#}
-        {{ _update_config({}, new_value[key], tree + [key]) -}}
-      {% endif -%}
-    {% endfor -%}
-  {% elif new_value | type_debug == "list" -%}
-    {#- Remove any obsolete list items -#}
-    {% for item in (old_value | reject('in', new_value)) -%}
-      {{ _delete(item, tree) -}}
-    {% endfor -%}
-    {#- Update / add the other list items -#}
-    {% for item in (new_value | reject('in', old_value)) -%}
-      {{ _set(item, tree) -}}
-    {% endfor -%}
+  {% if new_value | type_debug == "NoneType" -%}
+    {{ _delete(none, tree) -}}
   {% else -%}
-    {#- Update / add the value -#}
-    {% if (new_value | string) != (old_value | string) -%}
-      {{ _set(new_value, tree) -}}
+    {% if new_value | type_debug == "dict" -%}
+      {% for key in new_value -%}
+        {% if key in old_value -%}
+          {#- Recurse through the dictionary -#}
+          {{ _update_config(old_value[key], new_value[key], tree + [key]) -}}
+        {% else -%}
+          {#- The new key does not exist in the old config, create the config -#}
+          {{ _update_config({}, new_value[key], tree + [key]) -}}
+        {% endif -%}
+      {% endfor -%}
+    {% elif new_value | type_debug == "list" -%}
+      {#- Remove any obsolete list items -#}
+      {% for item in (old_value | reject('in', new_value)) -%}
+        {{ _delete(item, tree) -}}
+      {% endfor -%}
+      {#- Update / add the other list items -#}
+      {% for item in (new_value | reject('in', old_value)) -%}
+        {{ _set(item, tree) -}}
+      {% endfor -%}
+    {% else -%}
+      {#- Update / add the value -#}
+      {% if (new_value | string) != (old_value | string) -%}
+        {{ _set(new_value, tree) -}}
+      {% endif -%}
     {% endif -%}
   {% endif -%}
 {%- endmacro -%}

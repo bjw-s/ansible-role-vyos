@@ -1,0 +1,8 @@
+---
+# -----------------------
+# Services configuration
+# -----------------------
+
+vyos_dhcp_server:
+  enabled: false
+  interfaces: {}

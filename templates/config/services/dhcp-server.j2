@@ -1,0 +1,82 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/config.j2" import generate_config -%}
+
+{%- if vyos_dhcp_server['enabled'] -%}
+  {%- set dhcp_server_config = dict() -%}
+
+  {#- Set global dhcp-server options -#}
+  {%- if vyos_dhcp_server['host-decl-name'] is defined and vyos_dhcp_server['host-decl-name'] -%}
+      {%- set _ = dhcp_server_config.update({'host-decl-name': {}}) -%}
+  {%- endif -%}
+  {%- if vyos_dhcp_server['hostfile-update'] is defined and vyos_dhcp_server['hostfile-update'] -%}
+      {%- set _ = dhcp_server_config.update({'hostfile-update': {}}) -%}
+  {%- endif -%}
+
+  {#- Configure dhcp-server per interface -#}
+  {%- for interface_name, server_settings in vyos_dhcp_server['interfaces'].items() -%}
+    {%- if server_settings -%}
+      {%- set entry = dict() -%}
+      {%- if dhcp_server_config['shared-network-name'] is undefined -%}
+        {%- set _ = dhcp_server_config.update({'shared-network-name': {}}) -%}
+      {%- endif -%}
+
+      {#- Set default settings if required -#}
+      {%- set vyos_interface = vyos_interfaces_enriched[interface_name] -%}
+      {%- set shared_network_name = server_settings['shared-network-name'] | default(interface_name | upper) -%}
+      {%- set subnet = vyos_interface['network']['cidr'] -%}
+      {%- set default_router = server_settings['default_router'] | default(vyos_interface['ipv4_addr'] | ansible.netcommon.ipv4('address')) -%}
+      {%- set dns_server = server_settings['dns_server'] | default(vyos_interface['ipv4_addr'] | ansible.netcommon.ipv4('address')) -%}
+      {%- set domain_name = server_settings['domain'] | default(none) -%}
+      {%- set lease = server_settings['lease'] | default(86400) -%}
+      {%- set start_addr = vyos_interface['network']['cidr'] | ansible.netcommon.ipv4(server_settings['start_addr'] | default(100)) | ansible.netcommon.ipv4('address') -%}
+      {%- set stop_addr = vyos_interface['network']['cidr'] | ansible.netcommon.ipv4(server_settings['stop_addr'] | default(254)) | ansible.netcommon.ipv4('address') -%}
+
+      {# Apply interface specific settings #}
+      {%- set _ = entry.update({'authoritative': {}}) -%}
+      {%- set _ = entry.update({'subnet': {
+        subnet: {
+          'default-router': default_router,
+          'dns-server': dns_server,
+          'domain-name': domain_name,
+          'lease': lease,
+          'range': {
+            '0': {
+              'start': start_addr,
+              'stop': stop_addr,
+            }
+          }
+        }
+      }}) -%}
+
+      {#- Add static mappings from address book hosts -#}
+      {%- for host_name, host_details in vyos_address_book_enriched['hosts'].items() -%}
+        {%- if host_details['dhcp_client'] is not defined or (host_details['dhcp_client'] is defined and host_details['dhcp_client'] != false) -%}
+          {%- if host_details['network'] is defined and host_details['network'] == vyos_interface['network']['name'] and host_details['ipv4_addr'] is defined and host_details['mac_addr'] is defined -%}
+            {%- if entry['subnet'][subnet]['static-mapping'] is undefined -%}
+              {%- set _ = entry['subnet'][subnet].update({'static-mapping': {}}) -%}
+            {%- endif -%}
+
+            {%- set _ = entry['subnet'][subnet]['static-mapping'].update({host_name: {
+              'mac-address': host_details['mac_addr'],
+              'ip-address': host_details['ipv4_addr']
+            }}) -%}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+
+      {%- set _ = dhcp_server_config['shared-network-name'].update({shared_network_name: entry}) -%}
+    {%- endif -%}
+  {%- endfor -%}
+
+  {#- Process the collected config -#}
+  {%- if dhcp_server_config.keys() | count > 0 -%}
+    {# {{ dhcp_server_config }} #}
+    {{- generate_config(current_config, dhcp_server_config, ['service', 'dhcp-server']) -}}
+  {%- else -%}
+    {# Remove the entire key if no config is set -#}
+    delete service dhcp-server
+  {%- endif -%}
+{%- else -%}
+  {# Remove the key if service is disabled -#}
+  delete service dhcp-server
+{%- endif -%}

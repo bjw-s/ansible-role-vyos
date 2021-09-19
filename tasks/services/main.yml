@@ -1,0 +1,6 @@
+---
+- name: 'services | dhcp-server'
+  ansible.builtin.import_tasks:
+    file: dhcp-server.yml
+  tags:
+    - vyos_services_dhcp_server
