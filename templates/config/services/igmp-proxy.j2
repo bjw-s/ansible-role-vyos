@@ -1,0 +1,37 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/config.j2" import generate_config -%}
+
+{%- if vyos_igmp_proxy['enabled'] -%}
+  {%- set igmp_proxy_config = dict() -%}
+
+  {%- for name, settings in vyos_igmp_proxy['interfaces'].items() -%}
+    {%- set entry = dict() -%}
+    {%- set interface = vyos_interfaces_enriched[name]['interface_complete'] -%}
+
+    {%- if settings['role'] is defined -%}
+      {%- set _ = entry.update({'role': settings['role']}) -%}
+    {%- endif -%}
+    {%- if settings['threshold'] is defined -%}
+      {%- set _ = entry.update({'threshold': settings['threshold']}) -%}
+    {%- endif -%}
+    {%- if settings['alt-subnet'] is defined -%}
+      {%- set _ = entry.update({'alt-subnet': settings['alt-subnet']}) -%}
+    {%- endif -%}
+
+    {%- if igmp_proxy_config['interface'] is undefined -%}
+      {%- set _ = igmp_proxy_config.update({'interface': {}}) -%}
+    {%- endif -%}
+    {%- set _ = igmp_proxy_config['interface'].update({interface: entry}) -%}
+  {%- endfor -%}
+
+  {#- Process the collected config -#}
+  {%- if igmp_proxy_config.keys() | count > 0 -%}
+    {{- generate_config(current_config, igmp_proxy_config, ['protocols', 'igmp-proxy']) -}}
+  {%- else -%}
+    {# Remove the entire key if no config is set -#}
+    delete protocols igmp-proxy
+  {%- endif -%}
+{%- else -%}
+  {# Remove the key if service is disabled -#}
+  delete protocols igmp-proxy
+{%- endif -%}

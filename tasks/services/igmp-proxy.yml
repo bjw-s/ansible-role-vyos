@@ -1,0 +1,14 @@
+---
+- name: services | igmp-proxy | read config json
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/_utils/get_config_json.yml"
+    apply:
+      vars:
+        source: "services | igmp-proxy"
+
+- name: services | igmp-proxy | configure
+  vars:
+    current_config: "{{ vyos_active_config_json['protocol']['igmp-proxy'] | default({}) }}"
+  vyos.vyos.vyos_config:
+    match: line
+    lines: "{{ lookup('template', './config/services/igmp-proxy.j2') }}"

@@ -1,0 +1,41 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/config.j2" import generate_config -%}
+
+{%- if vyos_broadcast_relay['enabled'] -%}
+  {%- set broadcast_relay_config = dict() -%}
+  {%- set ns = namespace(counter = 1) -%}
+  {%- for rule in vyos_broadcast_relay['rules'] -%}
+    {%- set entry = dict() -%}
+
+    {%- if rule['description'] is defined -%}
+      {%- set _ = entry.update({'description': rule['description']}) -%}
+    {%- endif -%}
+
+    {%- set _ = entry.update({'port': rule['port']}) -%}
+
+    {%- for interface in rule['interfaces'] -%}
+      {%- if entry['interface'] is undefined -%}
+        {%- set _ = entry.update({'interface': []}) -%}
+      {%- endif -%}
+      {%- set vyos_interface = vyos_interfaces_enriched[interface] -%}
+      {%- set _ = entry['interface'].append(vyos_interface['interface_complete']) -%}
+    {% endfor %}
+
+    {%- if broadcast_relay_config['id'] is undefined -%}
+      {%- set _ = broadcast_relay_config.update({'id': {}}) -%}
+    {%- endif -%}
+    {%- set _ = broadcast_relay_config['id'].update({(ns.counter | string): entry}) -%}
+    {%- set ns.counter = ns.counter + 1 -%}
+  {%- endfor -%}
+
+  {#- Process the collected config -#}
+  {%- if broadcast_relay_config.keys() | count > 0 -%}
+    {{- generate_config(current_config, broadcast_relay_config, ['service', 'broadcast-relay']) -}}
+  {%- else -%}
+    {# Remove the entire key if no config is set -#}
+    delete service broadcast-relay
+  {%- endif -%}
+{%- else -%}
+  {# Remove the key if service is disabled -#}
+  delete service broadcast-relay
+{%- endif -%}

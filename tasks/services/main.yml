@@ -4,3 +4,21 @@
     file: dhcp-server.yml
   tags:
     - vyos_services_dhcp_server
+
+- name: 'services | igmp-proxy'
+  ansible.builtin.import_tasks:
+    file: igmp-proxy.yml
+  tags:
+    - vyos_services_igmp_proxy
+
+- name: 'services | broadcast-relay'
+  ansible.builtin.import_tasks:
+    file: broadcast-relay.yml
+  tags:
+    - vyos_services_broadcast_relay
+
+- name: 'services | mdns repeater'
+  ansible.builtin.import_tasks:
+    file: mdns_repeater.yml
+  tags:
+    - vyos_services_mdns_repeater

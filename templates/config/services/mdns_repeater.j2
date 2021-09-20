@@ -1,0 +1,25 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/config.j2" import generate_config -%}
+
+{%- if vyos_mdns_repeater['enabled'] -%}
+  {%- set mdns_repeater_config = dict() -%}
+
+  {%- for interface in vyos_mdns_repeater['interfaces'] -%}
+    {%- if mdns_repeater_config['interface'] is undefined -%}
+      {%- set _ = mdns_repeater_config.update({'interface': []}) -%}
+    {%- endif -%}
+    {%- set vyos_interface = vyos_interfaces_enriched[interface] -%}
+    {%- set _ = mdns_repeater_config['interface'].append(vyos_interface['interface_complete']) -%}
+  {%- endfor -%}
+
+  {#- Process the collected config -#}
+  {%- if mdns_repeater_config.keys() | count > 0 -%}
+    {{- generate_config(current_config, mdns_repeater_config, ['service', 'mdns', 'repeater']) -}}
+  {%- else -%}
+    {# Remove the entire key if no config is set -#}
+    delete service mdns repeater
+  {%- endif -%}
+{%- else -%}
+  {# Remove the key if service is disabled -#}
+  delete service mdns repeater
+{%- endif -%}

@@ -1,0 +1,14 @@
+---
+- name: services | broadcast-relay | read config json
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/_utils/get_config_json.yml"
+    apply:
+      vars:
+        source: "services | broadcast-relay"
+
+- name: services | broadcast-relay | configure
+  vars:
+    current_config: "{{ vyos_active_config_json['service']['broadcast-relay'] | default({}) }}"
+  vyos.vyos.vyos_config:
+    match: line
+    lines: "{{ lookup('template', './config/services/broadcast-relay.j2') }}"

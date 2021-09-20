@@ -10,5 +10,5 @@
   vars:
     current_config: "{{ vyos_active_config_json['nat'] | default({}) }}"
   vyos.vyos.vyos_config:
-    match: none
+    match: line
     lines: "{{ lookup('template', './config/nat/nat.j2') }}"
