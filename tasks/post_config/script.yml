@@ -1,0 +1,18 @@
+---
+- name: post-config | manage script | switch to ssh connection
+  set_fact:
+    ansible_connection: ssh
+
+- name: post-config | manage script | copy script
+  ansible.builtin.template:
+    src: config/post_config/vyos-postconfig-bootup.script.j2
+    dest: /config/scripts/vyos-postconfig-bootup.script
+    owner: root
+    group: vyattacfg
+    mode: "0775"
+    lstrip_blocks: true
+  become: true
+
+- name: post-config | manage script | switch to network_cli connection
+  set_fact:
+    ansible_connection: ansible.netcommon.network_cli

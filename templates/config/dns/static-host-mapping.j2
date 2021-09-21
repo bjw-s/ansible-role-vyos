@@ -1,0 +1,32 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/config.j2" import generate_config -%}
+
+{#- Collect static-host-mappings to be managed -#}
+{%- set static_host_mappings = dict() -%}
+
+{%- for hostname, host in vyos_address_book_enriched['hosts'].items() -%}
+  {# Add static host mappings for devices that are not DHCP clients #}
+  {%- if host['dhcp_client'] is defined and host['dhcp_client'] == false and host['ipv4_addr'] is defined -%}
+    {%- set _ = static_host_mappings.update({(hostname + '.' + vyos_domain): {'inet': host['ipv4_addr']}}) -%}
+  {% endif -%}
+
+  {#- Add static host mappings for device aliases -#}
+  {% if host['aliases'] is defined and host['ipv4_addr'] is defined -%}
+    {%- for alias in host['aliases'] -%}
+      {%- set _ = static_host_mappings.update({alias: {'inet': host['ipv4_addr']}}) -%}
+    {% endfor -%}
+  {% endif -%}
+{% endfor -%}
+
+{#- Add manually specified static host mappings -#}
+{%- for static_mapping in vyos_address_book_enriched['static_mappings'] | selectattr('ipv4_addr', 'defined') -%}
+  {%- set _ = static_host_mappings.update({static_mapping['hostname']: {'inet': static_mapping['ipv4_addr']}}) -%}
+{% endfor -%}
+
+{#- Process the collected static host mappings -#}
+{%- if static_host_mappings.keys() | count > 0 -%}
+  {{- generate_config(current_config, static_host_mappings, ['system', 'static-host-mapping', 'host-name']) -}}
+{%- else -%}
+  {# Remove the entire key if no static host mappings are found #}
+  delete system static-host-mapping
+{%- endif -%}

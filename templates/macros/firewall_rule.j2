@@ -39,12 +39,12 @@
   {% endif %}
 
   {% if matcher['host'] is defined %}
-    {%- set host = vyos_address_book['hosts'][matcher['host']] -%}
+    {%- set host = vyos_address_book_enriched['hosts'][matcher['host']] -%}
     {%- set _ = matcher_output.update({'address': host['ipv4_addr']}) -%}
   {% endif %}
 
   {% if matcher['service'] is defined %}
-    {% set service = vyos_address_book['services'][matcher['host']] %}
+    {% set service = vyos_address_book_enriched['services'][matcher['host']] %}
     {%- set _ = matcher_output.update({'address': service['ipv4_addr']}) -%}
   {% endif %}
 

@@ -1,0 +1,14 @@
+---
+- name: dns | coredns
+  ansible.builtin.import_tasks:
+    file: coredns.yml
+  when:
+    - vyos_coredns['enabled']
+  tags:
+    - vyos_dns_coredns
+
+- name: dns | static-host-mapping
+  ansible.builtin.import_tasks:
+    file: static-host-mapping.yml
+  tags:
+    - vyos_dns_static_host_mapping

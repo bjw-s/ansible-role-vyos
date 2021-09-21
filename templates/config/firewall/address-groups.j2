@@ -17,7 +17,7 @@
 {%- set address_groups = [] -%}
 
 {#- Collect address groups to be managed from address-book hosts -#}
-{%- for group in vyos_address_book['hosts'].values() | selectattr('groups', 'defined') | map(attribute='groups') | flatten | unique -%}
+{%- for group in vyos_address_book_enriched['hosts'].values() | selectattr('groups', 'defined') | map(attribute='groups') | flatten | unique -%}
   {%- set address_groups = address_groups.append({'name': group, 'members': []}) -%}
 {%- endfor -%}
 
@@ -27,14 +27,14 @@
 {%- endfor -%}
 
 {#- Collect address groups for services -#}
-{%- for name, service in vyos_address_book['services'].items() -%}
+{%- for name, service in vyos_address_book_enriched['services'].items() -%}
   {%- set address_groups = address_groups.append({'name': name, 'members': [{'address': service['ipv4_addr']}]}) -%}
 {%- endfor -%}
 
 {#- Add addresses to address groups -#}
 {%- for address_group in address_groups -%}
   {#- Collect addresses from address-book hosts -#}
-  {%- for host in vyos_address_book['hosts'].values() | selectattr('ipv4_addr', 'defined') | selectattr('groups', 'defined') | selectattr('groups', 'contains', address_group['name']) -%}
+  {%- for host in vyos_address_book_enriched['hosts'].values() | selectattr('ipv4_addr', 'defined') | selectattr('groups', 'defined') | selectattr('groups', 'contains', address_group['name']) -%}
     {%- set _ = address_group['members'].append({'address': host['ipv4_addr']}) -%}
   {%- endfor -%}
 

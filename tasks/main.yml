@@ -46,3 +46,15 @@
     file: services/main.yml
   tags:
     - vyos_services
+
+- name: dns
+  ansible.builtin.import_tasks:
+    file: dns/main.yml
+  tags:
+    - vyos_dns
+
+- name: post-config
+  ansible.builtin.import_tasks:
+    file: post_config/main.yml
+  tags:
+    - vyos_post_config

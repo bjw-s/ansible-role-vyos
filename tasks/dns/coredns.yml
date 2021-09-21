@@ -1,0 +1,60 @@
+---
+- name: dns | coredns | switch to ssh connection
+  set_fact:
+    ansible_connection: ssh
+
+- name: dns | coredns | create config directory on host
+  ansible.builtin.file:
+    path: "{{ vyos_coredns['config_path'] }}"
+    state: directory
+    owner: root
+    group: vyattacfg
+    mode: "0755"
+  become: true
+
+- name: dns | coredns | create kubeconfig
+  when:
+    - vyos_coredns['k8s_gateway']['enabled']
+  run_once: true
+  vars:
+    api_ip: "{{ vyos_coredns['k8s_gateway']['api_ip'] }}"
+    service_account: "{{ vyos_coredns['k8s_gateway']['service_account'] }}"
+    service_account_ns: "{{ vyos_coredns['k8s_gateway']['service_account_ns'] }}"
+    service_account_raw: "{{ lookup('kubernetes.core.k8s', namespace=service_account_ns, kind='ServiceAccount', resource_name=service_account) }}"
+    service_account_token: "{{ service_account_raw | json_query('secrets[*].name | [0]') }}"
+    certificate_authority_raw: "{{ lookup('kubernetes.core.k8s', namespace=service_account_ns, kind='Secret', resource_name=service_account_token) }}"
+    certificate_authority: '{{ certificate_authority_raw | json_query(''data."ca.crt"'') }}'
+    certificate_authority_token: "{{ certificate_authority_raw | json_query('data.token') | b64decode }}"
+  ansible.builtin.template:
+    src: config/dns/coredns_kubeconfig.j2
+    dest: "{{ vyos_coredns['config_path'] }}/kubeconfig"
+    owner: root
+    group: vyattacfg
+    mode: "0775"
+    lstrip_blocks: true
+  become: true
+
+- name: dns | coredns | copy Corefile
+  ansible.builtin.template:
+    src: config/dns/coredns_corefile.j2
+    dest: "{{ vyos_coredns['config_path'] }}/Corefile"
+    owner: root
+    group: vyattacfg
+    mode: "0775"
+    lstrip_blocks: true
+  become: true
+
+- name: dns | coredns | start container
+  containers.podman.podman_container:
+    name: coredns
+    image: "{{ (vyos_coredns['container']['repository'] + ':' + vyos_coredns['container']['tag']) }}"
+    volume:
+      - "{{ vyos_coredns['config_path'] }}:/config"
+      - "/etc/hosts:/etc/hosts:ro"
+    network: host
+    state: started
+  become: true
+
+- name: dns | coredns | switch to network_cli connection
+  set_fact:
+    ansible_connection: ansible.netcommon.network_cli

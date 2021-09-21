@@ -1,0 +1,14 @@
+---
+- name: dns | static-host-mapping | read config json
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/_utils/get_config_json.yml"
+    apply:
+      vars:
+        source: "dns | static-host-mapping"
+
+- name: dns | static-host-mapping | configure
+  vars:
+    current_config: "{{ vyos_active_config_json['system']['static-host-mapping']['host-name'] | default({}) }}"
+  vyos.vyos.vyos_config:
+    match: line
+    lines: "{{ lookup('template', './config/dns/static-host-mapping.j2') }}"
