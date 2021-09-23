@@ -1,0 +1,61 @@
+{
+  "releaseMastermind": {
+    "labels": {
+      "type:breaking": {
+        "name": "type:breaking",
+        "colour": "#7f8bdb",
+        "description": "Breaking change"
+      },
+      "type:feature": {
+        "name": "type:feature",
+        "colour": "#7f8bdb",
+        "description": "New / changed functionality"
+      },
+      "type:fix": {
+        "name": "type:fix",
+        "colour": "#7f8bdb",
+        "description": "Fixing something that was broken"
+      }
+    },
+    "runners": [
+      {
+        "root": ".",
+        "versioning": {
+          "source": "milestones",
+          "type": "other"
+        },
+        "pr": {
+          "labels": {
+            "type:breaking": {
+              "requires": 1,
+              "conditions": [
+                {
+                  "type": "titleMatches",
+                  "pattern": "^.*!:.*"
+                }
+              ]
+            },
+            "type:feature": {
+              "requires": 1,
+              "conditions": [
+                {
+                  "type": "titleMatches",
+                  "pattern": "^feat!{0}:.*"
+                }
+              ]
+            },
+            "type:fix": {
+              "requires": 1,
+              "conditions": [
+                {
+                  "type": "titleMatches",
+                  "pattern": "^fix!{0}:.*"
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}
