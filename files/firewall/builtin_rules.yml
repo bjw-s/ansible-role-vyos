@@ -26,7 +26,7 @@ accept_dns:
   action: accept
   protocol: tcp_udp
   destination:
-    port: domain
+    port: domain,domain-s
 
 accept_bgp:
   action: accept
@@ -40,6 +40,18 @@ accept_ssh:
   protocol: tcp
   destination:
     port: ssh
+
+accept_http:
+  action: accept
+  protocol: tcp
+  destination:
+    port: http
+
+accept_https:
+  action: accept
+  protocol: tcp
+  destination:
+    port: https
 
 accept_ntp:
   action: accept
