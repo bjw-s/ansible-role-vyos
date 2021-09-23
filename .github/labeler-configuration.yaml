@@ -1,0 +1,16 @@
+---
+version: v1
+
+labels:
+  - label: "type:breaking"
+    sync: true
+    matcher:
+      title: "^.*!:.*"
+  - label: "type:feature"
+    sync: true
+    matcher:
+      title: "^feat!{0}:.*"
+  - label: "type:fix"
+    sync: true
+    matcher:
+      title: "^fix!{0}:.*"
