@@ -17,5 +17,6 @@ jobs:
 
       - uses: reviewdog/action-markdownlint@v0.1
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
           markdownlint_flags: "-c .markdownlint.yaml README.md docs/**"

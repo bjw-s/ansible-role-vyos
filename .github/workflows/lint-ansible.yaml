@@ -17,5 +17,6 @@ jobs:
 
       - uses: reviewdog/action-ansiblelint@v1
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
           ansiblelint_flags: "-c .ansible-lint"
