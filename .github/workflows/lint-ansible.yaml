@@ -1,0 +1,26 @@
+---
+name: Lint - Ansible
+
+on: # yamllint disable-line rule:truthy
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+jobs:
+  main:
+    name: Run ansible-lint
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - uses: reviewdog/action-ansiblelint@v1
+        with:
+          reporter: github-check
+          filter_mode: file
+          ansiblelint_flags: "-c .ansible-lint"
