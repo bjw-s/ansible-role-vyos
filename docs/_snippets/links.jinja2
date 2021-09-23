@@ -1,0 +1,43 @@
+{%- set urls =
+  {
+    'repo': {
+      'url': 'https://github.com/bjw-s/ansible-role-vyos'
+    },
+    'external': {
+      'ansible': {
+        'url': 'https://www.ansible.com/',
+        'label': 'Ansible'
+      },
+      'coredns': {
+        'url': 'https://github.com/coredns/coredns',
+        'label': 'CoreDNS'
+      },
+      'coredns_k8s_gateway': {
+        'url': 'https://coredns.io/explugins/k8s_gateway/',
+        'label': 'k8s_gateway'
+      },
+      'sops': {
+        'url': 'https://github.com/mozilla/sops',
+        'label': 'Mozilla SOPS'
+      },
+      'vyos': {
+        'url': 'https://vyos.io',
+        'label': 'VyOS'
+      },
+    }
+  }
+-%}
+
+{% macro external(name, label) -%}
+  {% if label %}
+  [{{ label }}]({{ urls.external[name].url }}){target=\_blank}
+  {% elif urls.external[name].label %}
+  [{{ urls.external[name].label }}]({{ urls.external[name].url }}){target=\_blank}
+  {% else %}
+  [{{ name }}]({{ urls.external[name].url }}){target=\_blank}
+  {% endif %}
+{%- endmacro %}
+
+{% macro repoUrl(label, suffix) -%}
+  [{{ label }}]({{ urls.repo.url }}{% if label %}/{{ suffix }}{% endif %}){target=\_blank}
+{%- endmacro %}
