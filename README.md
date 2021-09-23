@@ -4,11 +4,8 @@ Ansible role for setting up a VyOS router
 
 ## Release notes
 
-Please see [Releases](https://github.com/bjw-s/ansible-role-vyos/releases)
-and [CHANGELOG.md](CHANGELOG.md).
-
-Before upgrading, see [CHANGELOG.md](CHANGELOG.md) for notifications of breaking
-changes.
+Please see [Releases](https://github.com/bjw-s/ansible-role-vyos/releases) for information 
+about the contents of each release.
 
 ## Requirements
 
