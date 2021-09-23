@@ -1,0 +1,32 @@
+---
+name: "Docs - Publish to GitHub Pages"
+
+on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/docs-publish.yaml"
+      - "mkdocs.yaml"
+      - "docs/**"
+
+jobs:
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Configure Git
+        run: |
+          git config user.name "bjw-s[bot]"
+          git config user.email "bjw-s[bot]@users.noreply.github.com"
+
+      - run: pip install -r requirements-mkdocs.txt
+
+      - run: mkdocs gh-deploy --config-file ./mkdocs.yaml --force
