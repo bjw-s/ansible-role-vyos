@@ -1,0 +1,21 @@
+---
+name: "Metadata - Label pull requests"
+
+on:
+  workflow_run:
+    workflows:
+    - "Lint - PR"
+    types:
+    - completed
+
+jobs:
+  label:
+    name: Label pull requests
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: Videndum/label-mastermind@2.1.3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          config: .github/labeler-configuration.json
