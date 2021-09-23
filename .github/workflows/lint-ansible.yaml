@@ -21,6 +21,5 @@ jobs:
 
       - uses: reviewdog/action-ansiblelint@v1
         with:
-          reporter: github-check
-          filter_mode: file
+          reporter: github-pr-review
           ansiblelint_flags: "-c .ansible-lint"
