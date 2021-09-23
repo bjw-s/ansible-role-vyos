@@ -1,0 +1,21 @@
+---
+name: Lint - Docs
+
+on: # yamllint disable-line rule:truthy
+  pull_request:
+    paths:
+      - ".github/workflows/docs-publish.yaml"
+      - "docs/**"
+      - "README.md"
+
+jobs:
+  main:
+    name: Run markdownlint
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: reviewdog/action-markdownlint@v0.1
+        with:
+          reporter: github-pr-review
+          markdownlint_flags: "-c .markdownlint.yaml README.md docs/**"
