@@ -8,13 +8,17 @@
     {%- set _ = output.update({'state': {}})-%}
     {% for state in rule_config['state'].keys() %}
       {% if rule_config['state'][state] %}
-        {%- set _ = output['state'].update({state: true}) -%}
+        {%- set _ = output['state'].update({state: 'enable'}) -%}
       {% endif %}
     {% endfor %}
   {% endif %}
 
   {% if rule_config['protocol'] is defined %}
     {%- set _ = output.update({'protocol': rule_config['protocol']}) -%}
+  {% endif %}
+
+  {% if rule_config['log'] is defined and rule_config['log'] %}
+    {%- set _ = output.update({'log': 'enable'}) -%}
   {% endif %}
 
   {# Render the source section #}
@@ -53,15 +57,15 @@
   {% endif %}
 
   {% if matcher['address-group'] is defined %}
-    {%- set _ = matcher_output.update({'group': {'address_group': matcher['address-group']}}) -%}
+    {%- set _ = matcher_output.update({'group': {'address-group': matcher['address-group']}}) -%}
   {% endif %}
 
   {% if matcher['network-group'] is defined %}
-    {%- set _ = matcher_output.update({'group': {'network_group': matcher['network-group']}}) -%}
+    {%- set _ = matcher_output.update({'group': {'network-group': matcher['network-group']}}) -%}
   {% endif %}
 
   {% if matcher['port-group'] is defined %}
-    {%- set _ = matcher_output.update({'group': {'port_group': matcher['port-group']}}) -%}
+    {%- set _ = matcher_output.update({'group': {'port-group': matcher['port-group']}}) -%}
   {% endif %}
 
   {{- matcher_output | to_yaml -}}
