@@ -1,0 +1,47 @@
+{# Template that generates container systemd units #}
+{%- macro container(name, config) -%}
+  {%- set run_args = [] -%}
+
+  {%- for volume in (config['volumes'] | default([])) -%}
+    {%- set _ = run_args.append('-v') -%}
+    {%- set _ = run_args.append(volume) -%}
+  {%- endfor -%}
+
+  {%- for cap in (config['cap_add'] | default([])) -%}
+    {%- set _ = run_args.append('--cap-add') -%}
+    {%- set _ = run_args.append(cap) -%}
+  {%- endfor -%}
+
+  {%- if config['env'] is defined -%}
+    {%- for key, value in config['env'].items() -%}
+      {%- set _ = run_args.append('--env') -%}
+      {%- set _ = run_args.append(key + '=' + value) -%}
+    {%- endfor -%}
+  {%- endif -%}
+
+  {%- if (config['host-networking'] | default(false)) %}
+    {%- set _ = run_args.append('--net') -%}
+    {%- set _ = run_args.append('host') -%}
+  {%- endif -%}
+cat <<EOT > /etc/systemd/system/{{ name }}.service
+[Unit]
+Description={{ name }} container
+Wants=network.target
+After=network-online.target
+
+[Service]
+Restart=on-failure
+TimeoutStopSec=60
+ExecStartPre=/usr/bin/podman rm --force --volumes --ignore {{ name }}
+ExecStart=/usr/bin/podman run -d --rm --name {{ name }} {{ run_args | join(' ') }} {{ config['image']['repository'] }}:{{ config['image']['tag'] }}
+ExecStop=/usr/bin/podman stop -t 10 {{ name }}
+ExecStopPost=/usr/bin/podman stop -t 10 {{ name }}
+Type=forking
+
+[Install]
+WantedBy=multi-user.target default.target
+EOT
+
+systemctl daemon-reload
+systemctl start {{ name }}
+{%- endmacro %}

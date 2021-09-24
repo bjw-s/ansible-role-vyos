@@ -1,3 +1,5 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/container.j2" import container with context -%}
 #!/bin/sh
 # This script is executed at boot time after VyOS configuration is fully applied.
 # Any modifications required to work around unfixed bugs
@@ -5,25 +7,26 @@
 
 {% if vyos_coredns['enabled'] %}
 # CoreDNS workaround until podman is fully supported on CLI
-cat <<EOT > /etc/systemd/system/coredns.service
-[Unit]
-Description=CoreDNS container
-Wants=network.target
-After=network-online.target
+{{ container(
+  'coredns',
+  {
+    'image': {
+      'repository': vyos_coredns['container']['repository'],
+      'tag': vyos_coredns['container']['tag']
+    },
+    'volumes': [
+      vyos_coredns['config_path'] + ':/config',
+      '/etc/hosts:/etc/hosts:ro'
+    ],
+    'cap_add': [
+      'CAP_NET_BIND_SERVICE'
+    ],
+    'host-networking': true
+  }
+) }}
+{% endif %}
 
-[Service]
-Restart=on-failure
-TimeoutStopSec=60
-ExecStartPre=/usr/bin/podman rm --force --volumes --ignore coredns
-ExecStart=/usr/bin/podman run -d --rm --net host --cap-add CAP_NET_BIND_SERVICE --name coredns -v {{ vyos_coredns['config_path'] }}:/config -v /etc/hosts:/etc/hosts:ro {{ vyos_coredns['container']['repository'] }}:{{ vyos_coredns['container']['tag'] }}
-ExecStop=/usr/bin/podman stop -t 10 coredns
-ExecStopPost=/usr/bin/podman stop -t 10 coredns
-Type=forking
+{% for container_name, container_config in vyos_containers.items() %}
+{{ container(container_name, container_config) }}
 
-[Install]
-WantedBy=multi-user.target default.target
-EOT
-
-systemctl daemon-reload
-systemctl start coredns
-{% endif -%}
+{% endfor -%}

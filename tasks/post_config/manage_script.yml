@@ -13,6 +13,13 @@
     lstrip_blocks: true
   become: true
 
+- name: post-config | manage script | run
+  when:
+    vyos_run_post_config_script
+  ansible.builtin.command:
+    cmd: /config/scripts/vyos-postconfig-bootup.script
+  become: true
+
 - name: post-config | manage script | switch to network_cli connection
   set_fact:
     ansible_connection: ansible.netcommon.network_cli
