@@ -1,0 +1,10 @@
+---
+# -------------------------
+# Post-config configuration
+# -------------------------
+
+vyos_save_config: true
+
+vyos_run_post_config_script: true
+
+vyos_containers: {}
