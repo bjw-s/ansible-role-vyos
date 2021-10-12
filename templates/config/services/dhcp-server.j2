@@ -30,6 +30,7 @@
       {%- set lease = server_settings['lease'] | default(86400) -%}
       {%- set start_addr = vyos_interface['network']['cidr'] | ansible.netcommon.ipv4(server_settings['start_addr'] | default(100)) | ansible.netcommon.ipv4('address') -%}
       {%- set stop_addr = vyos_interface['network']['cidr'] | ansible.netcommon.ipv4(server_settings['stop_addr'] | default(254)) | ansible.netcommon.ipv4('address') -%}
+      {%- set subnet_parameters = server_settings['subnet_parameters'] | default(none) -%}
 
       {# Apply interface specific settings #}
       {%- set _ = entry.update({'authoritative': {}}) -%}
@@ -44,7 +45,8 @@
               'start': start_addr,
               'stop': stop_addr,
             }
-          }
+          },
+          'subnet-parameters': subnet_parameters
         }
       }}) -%}
 
