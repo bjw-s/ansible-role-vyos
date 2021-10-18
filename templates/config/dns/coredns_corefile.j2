@@ -3,26 +3,42 @@
   {%- set listen_addresses = listen_addresses.append(vyos_interfaces_enriched[interface]['ipv4_addr'] | ansible.netcommon.ipv4('address')) -%}
 {%- endfor -%}
 
-.:53 {
+(common) {
   bind {{ listen_addresses | unique | join(' ') }}
   errors
   log
-  prometheus :9153
-
+  reload
+  loadbalance
+  cache 300
+  loop
+  local
   hosts /etc/hosts {
-    reload "1m"
+    ttl 600
+    reload 5s
     fallthrough
   }
 
-{% if vyos_coredns['k8s_gateway']['enabled'] %}
+  {% if vyos_coredns['k8s_gateway']['enabled'] %}
   k8s_gateway {{ vyos_coredns['k8s_gateway']['domains'] | join(' ') }} {
     ttl 30
     kubeconfig /config/kubeconfig
     fallthrough
   }
-{% endif %}
+  {% endif %}
 
+  prometheus :9153
+}
+
+. {
+  import common
   forward . tls://1.1.1.1 tls://1.0.0.1 {
     tls_servername cloudflare-dns.com
   }
 }
+
+{% for domain in vyos_coredns['k8s_gateway']['domains'] %}
+{{ domain }} {
+  import common
+}
+
+{% endfor -%}
