@@ -5,6 +5,7 @@
 
 vyos_coredns:
   enabled: false
+  corefile_template:
   interfaces: []
   config_path: /config/coredns
   container:

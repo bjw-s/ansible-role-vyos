@@ -36,7 +36,7 @@
 
 - name: dns | coredns | copy Corefile
   ansible.builtin.template:
-    src: config/dns/coredns_corefile.j2
+    src: "{{ vyos_coredns['corefile_template'] | default('config/dns/coredns_corefile.j2') }}"
     dest: "{{ vyos_coredns['config_path'] }}/Corefile"
     owner: root
     group: vyattacfg
