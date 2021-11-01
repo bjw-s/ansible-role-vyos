@@ -48,15 +48,21 @@
     {{ _delete(none, tree) -}}
   {% else -%}
     {% if new_value | type_debug == "dict" -%}
-      {% for key in new_value -%}
-        {% if key in old_value -%}
-          {#- Recurse through the dictionary -#}
-          {{ _update_config(old_value[key], new_value[key], tree + [key]) -}}
-        {% else -%}
-          {#- The new key does not exist in the old config, create the config -#}
-          {{ _update_config({}, new_value[key], tree + [key]) -}}
+      {% if new_value.keys() | count > 0 -%}
+        {% for key in new_value -%}
+          {% if key in old_value -%}
+            {#- Recurse through the dictionary -#}
+            {{ _update_config(old_value[key], new_value[key], tree + [key]) -}}
+          {% else -%}
+            {#- The new key does not exist in the old config, create the config -#}
+            {{ _update_config({}, new_value[key], tree + [key]) -}}
+          {% endif -%}
+        {% endfor -%}
+      {% else -%}
+        {% if old_value is defined -%}
+          {{ _set(new_value, tree) -}}
         {% endif -%}
-      {% endfor -%}
+      {% endif -%}
     {% elif new_value | type_debug == "list" -%}
       {#- Remove any obsolete list items -#}
       {% for item in (old_value | reject('in', new_value)) -%}
