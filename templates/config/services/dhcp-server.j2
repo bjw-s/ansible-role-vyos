@@ -11,6 +11,7 @@
   {%- if vyos_dhcp_server['hostfile-update'] is defined and vyos_dhcp_server['hostfile-update'] -%}
       {%- set _ = dhcp_server_config.update({'hostfile-update': {}}) -%}
   {%- endif -%}
+  {%- set _ = dhcp_server_config.update({'global-parameters': (vyos_dhcp_server['global-parameters'] | default(none))}) -%}
 
   {#- Configure dhcp-server per interface -#}
   {%- for interface_name, server_settings in vyos_dhcp_server['interfaces'].items() -%}
