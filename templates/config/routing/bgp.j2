@@ -10,10 +10,7 @@
   {%- set _ = bgp_config.update({
     'local-as': vyos_bgp['local_as'],
     'parameters': {
-      'router-id': vyos_bgp['router_id'],
-      'default': {
-        'no-ipv4-unicast': {}
-      }
+      'router-id': vyos_bgp['router_id']
     }
   }) -%}
 
