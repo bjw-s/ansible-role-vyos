@@ -24,7 +24,6 @@
       {#- Recurse through the list -#}
       {% for item in value -%}
         {{ _set(item, tree) -}}
-        set {{ tree | join(' ') }} {{ item }}
       {% endfor -%}
     {% elif value is string -%}
       {#- Set the value with quotes -#}
