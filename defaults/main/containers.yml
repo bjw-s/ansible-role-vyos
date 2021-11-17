@@ -1,0 +1,9 @@
+---
+# -----------------------
+# Container configuration
+# -----------------------
+
+vyos_container:
+  registries: []
+  networks: {}
+  containers: {}

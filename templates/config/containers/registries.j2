@@ -1,0 +1,17 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/config.j2" import generate_config -%}
+
+{%- set registries = dict() -%}
+
+{#- Registries from gateway config -#}
+{%- for registry in (vyos_containers['registries'] | default(dict())) %}
+  {%- set _ = registries.update({registry: {}}) -%}
+{%- endfor -%}
+
+{#- Process the collected config entries -#}
+{%- if registries | length > 0 -%}
+  {{- generate_config(current_config, registries, ['container', 'registry']) -}}
+{%- else -%}
+  {#- Remove the entire key if no config is found -#}
+  delete container registry
+{%- endif -%}

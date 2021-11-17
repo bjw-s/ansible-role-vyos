@@ -1,0 +1,18 @@
+---
+- name: containers | registries
+  ansible.builtin.import_tasks:
+    file: registries.yml
+  tags:
+  - vyos_containers_registries
+
+- name: containers | networks
+  ansible.builtin.import_tasks:
+    file: networks.yml
+  tags:
+  - vyos_containers_networks
+
+- name: containers | containers
+  ansible.builtin.import_tasks:
+    file: containers.yml
+  tags:
+  - vyos_containers_containers

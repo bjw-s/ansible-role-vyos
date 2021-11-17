@@ -1,0 +1,31 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- from "macros/config.j2" import generate_config -%}
+{%- import "macros/networks.j2" as networks with context -%}
+
+{%- set container_networks = dict() -%}
+
+{#- Networks from gateway config -#}
+{%- set config_container_networks = (vyos_containers['networks'] | default(dict())) -%}
+{%- for network_name, network_config in config_container_networks.items() %}
+  {%- set entry = dict() -%}
+  {%- if network_config['description'] is defined -%}
+    {%- set _ = entry.update({'description': network_config['description']}) -%}
+  {%- endif -%}
+
+  {%- if network_config['network'] is defined -%}
+    {%- set network = networks.get_network_by_name(network_config['network']) | from_yaml -%}
+    {%- set _ = entry.update({'prefix': network['cidr']}) -%}
+  {%- elif network_config['prefix'] is defined -%}
+    {%- set _ = entry.update({'prefix': network_config['prefix']}) -%}
+  {%- endif -%}
+
+  {%- set _ = container_networks.update({network_name: entry}) -%}
+{%- endfor -%}
+
+{#- Process the collected config entries -#}
+{%- if container_networks | length > 0 -%}
+  {{- generate_config(current_config, container_networks, ['container', 'network']) -}}
+{%- else -%}
+  {#- Remove the entire key if no config is found -#}
+  delete container network
+{%- endif -%}
