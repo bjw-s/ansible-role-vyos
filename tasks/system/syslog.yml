@@ -2,14 +2,14 @@
 - name: 'system | syslog | configure remote syslog'
   vyos.vyos.vyos_config:
     lines:
-      - "set system syslog host {{ vyos_syslog['endpoint'] }} facility all level all"
-      - "set system syslog host {{ vyos_syslog['endpoint'] }} facility all protocol tcp"
-      - "set system syslog host {{ vyos_syslog['endpoint'] }} format octet-counted"
-      - "set system syslog host {{ vyos_syslog['endpoint'] }} port {{ vyos_syslog['port'] }}"
+      - "set system syslog host {{ vyos_remote_syslog['endpoint'] }} facility all level all"
+      - "set system syslog host {{ vyos_remote_syslog['endpoint'] }} facility all protocol tcp"
+      - "set system syslog host {{ vyos_remote_syslog['endpoint'] }} format octet-counted"
+      - "set system syslog host {{ vyos_remote_syslog['endpoint'] }} port {{ vyos_remote_syslog['port'] }}"
   when:
     - vyos_remote_syslog['enabled'] is defined
-    - vyos_syslog['endpoint'] is defined
-    - vyos_syslog['port'] is defined
+    - vyos_remote_syslog['endpoint'] is defined
+    - vyos_remote_syslog['port'] is defined
     - vyos_remote_syslog['enabled']
 
 - name: 'system | syslog | remove remote syslog'

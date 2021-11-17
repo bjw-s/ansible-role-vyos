@@ -11,6 +11,7 @@
   {%- if vyos_dhcp_server['hostfile-update'] is defined and vyos_dhcp_server['hostfile-update'] -%}
       {%- set _ = dhcp_server_config.update({'hostfile-update': {}}) -%}
   {%- endif -%}
+  {%- set _ = dhcp_server_config.update({'global-parameters': (vyos_dhcp_server['global-parameters'] | default(none))}) -%}
 
   {#- Configure dhcp-server per interface -#}
   {%- for interface_name, server_settings in vyos_dhcp_server['interfaces'].items() -%}
@@ -27,24 +28,28 @@
       {%- set default_router = server_settings['default_router'] | default(vyos_interface['ipv4_addr'] | ansible.netcommon.ipv4('address')) -%}
       {%- set dns_server = server_settings['dns_server'] | default(vyos_interface['ipv4_addr'] | ansible.netcommon.ipv4('address')) -%}
       {%- set domain_name = server_settings['domain'] | default(none) -%}
+      {%- set domain_search = server_settings['domain-search'] | default(none) -%}
       {%- set lease = server_settings['lease'] | default(86400) -%}
       {%- set start_addr = vyos_interface['network']['cidr'] | ansible.netcommon.ipv4(server_settings['start_addr'] | default(100)) | ansible.netcommon.ipv4('address') -%}
       {%- set stop_addr = vyos_interface['network']['cidr'] | ansible.netcommon.ipv4(server_settings['stop_addr'] | default(254)) | ansible.netcommon.ipv4('address') -%}
+      {%- set subnet_parameters = server_settings['subnet_parameters'] | default(none) -%}
 
       {# Apply interface specific settings #}
       {%- set _ = entry.update({'authoritative': {}}) -%}
       {%- set _ = entry.update({'subnet': {
         subnet: {
           'default-router': default_router,
-          'dns-server': dns_server,
+          'name-server': dns_server,
           'domain-name': domain_name,
+          'domain-search': domain_search,
           'lease': lease,
           'range': {
             '0': {
               'start': start_addr,
               'stop': stop_addr,
             }
-          }
+          },
+          'subnet-parameters': subnet_parameters
         }
       }}) -%}
 
