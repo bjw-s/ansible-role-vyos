@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vyos_container.schema.json",
+  "title": "vyos_container",
+  "description": "VyOS Container configuration",
+  "type": "object",
+  "properties": {
+    "registries": {
+      "description": "Unqualified search registries for any image that does not include the registry in the image name.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "networks": {
+      "description": "Container networks to be managed",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/networkItem"
+      }
+    },
+    "containers": {
+      "description": "Container to be managed",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/containerItem"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "networkItem": {
+      "type": "object",
+      "title": "Network entry",
+      "allOf": [
+        {
+          "title": "Base fields",
+          "properties": {
+            "description": {
+              "description": "A string with a functional description of the network.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "Network entry fields",
+          "oneOf": [
+            {
+              "title": "Network entry with network reference",
+              "properties": {
+                "network": {
+                  "description": "A reference to the key of an entry in the VyOS networks list. The prefix will be determined automatically.",
+                  "type": "string"
+                }
+              },
+              "required": ["network"],
+              "additionalProperties": false
+            },
+            {
+              "title": "Network entry with custom prefix",
+              "properties": {
+                "prefix": {
+                  "description": "A network prefix to be assigned to this container network.",
+                  "type": "string"
+                }
+              },
+              "required": ["prefix"],
+              "additionalProperties": false
+            }
+          ]
+        }
+      ],
+      "additionalProperties": false,
+      "examples": [
+        {
+          "network": "services"
+        },
+        {
+          "description": "test",
+          "network": "services"
+        },
+        {
+          "description": "test",
+          "prefix": "10.35.0.0/24"
+        }
+      ]
+    },
+
+    "containerItem": {
+      "type": "object",
+      "title": "Container entry",
+      "allOf": [
+        {
+          "title": "Base fields",
+          "properties": {
+            "image": {
+              "description": "Configures the container image.",
+              "type": "object",
+              "properties": {
+                "repository": {
+                  "description": "The repository of the container image.",
+                  "type": "string"
+                },
+                "tag": {
+                  "description": "The tag of the container image.",
+                  "type": "string"
+                }
+              },
+              "required": ["repository", "tag"],
+              "additionalProperties": false
+            },
+            "cap-add": {
+              "description": "A list of capabilities to be added to the container.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true,
+              "examples": [
+                {
+                  "cap-add": ["net-admin"]
+                }
+              ]
+            },
+            "env": {
+              "description": "A dict containing the environment variables to be set in the container.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["image"],
+          "additionalProperties": false,
+          "examples": [
+            {
+              "image": {
+                "repository": "vyos/vyos-build",
+                "tag": "crux"
+              },
+              "env": {
+                "TZ": "UTC"
+              }
+            }
+          ]
+        },
+        {
+          "title": "Networking fields",
+          "oneOf": [
+            {
+              "title": "Host networking",
+              "properties": {
+                "allow-host-networks": {
+                  "description": "Run the container with host networking enabled.",
+                  "type": "boolean"
+                }
+              },
+              "required": ["allow-host-networks"],
+              "additionalProperties": false,
+              "examples": [
+                {
+                  "allow-host-networks": true
+                }
+              ]
+            },
+            {
+              "title": "Container networking",
+              "description": "Use this if you want to configure this container with container networking.",
+              "properties": {
+                "networks": {
+                  "description": "Configures the container networks the container should run on.",
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "title": "Container network entry",
+                    "properties": {
+                      "ipv4_hostid": {
+                        "description": "The host id that is used to generate the IP address on the specified network",
+                        "type": "integer"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": ["networks"],
+              "additionalProperties": false,
+              "examples": [
+                {
+                  "networks": {
+                    "services": {
+                      "ipv4_hostid": 10
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
