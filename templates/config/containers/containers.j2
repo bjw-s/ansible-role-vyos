@@ -9,7 +9,7 @@
 {%- for container_name, container_config in config_containers.items() %}
   {%- set entry = dict() -%}
 
-  {%- set _ = entry.update({'image': container_config['image']['registry'] + ':' + container_config['image']['tag'] }) -%}
+  {%- set _ = entry.update({'image': container_config['image']['repository'] + ':' + container_config['image']['tag'] }) -%}
 
   {%- if container_config['allow-host-networks'] is defined and container_config['allow-host-networks'] -%}
     {%- set _ = entry.update({'allow-host-networks': {}}) -%}
@@ -33,6 +33,22 @@
       }) -%}
     {%- endfor -%}
     {%- set _ = entry.update({'environment': env_item}) -%}
+  {%- endif -%}
+
+  {%- if container_config['volumes'] is defined -%}
+    {%- set volumes = dict() -%}
+    {%- for vol_name, vol_config in container_config['volumes'].items() %}
+      {%- set _ = volumes.update({vol_name: vol_config}) -%}
+    {%- endfor -%}
+    {%- set _ = entry.update({'volume': volumes}) -%}
+  {%- endif -%}
+
+  {%- if container_config['ports'] is defined -%}
+    {%- set ports = dict() -%}
+    {%- for port_name, port_config in container_config['ports'].items() %}
+      {%- set _ = ports.update({port_name: port_config}) -%}
+    {%- endfor -%}
+    {%- set _ = entry.update({'port': ports}) -%}
   {%- endif -%}
 
   {%- if container_config['networks'] is defined -%}

@@ -47,17 +47,17 @@
   tags:
     - vyos_services
 
-- name: containers
-  ansible.builtin.import_tasks:
-    file: containers/main.yml
-  tags:
-    - vyos_containers
-
 - name: dns
   ansible.builtin.import_tasks:
     file: dns/main.yml
   tags:
     - vyos_dns
+
+- name: containers
+  ansible.builtin.import_tasks:
+    file: containers/main.yml
+  tags:
+    - vyos_containers
 
 - name: post-config
   ansible.builtin.import_tasks:

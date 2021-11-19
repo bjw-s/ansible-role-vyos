@@ -47,3 +47,69 @@
 - name: dns | coredns | switch to network_cli connection
   set_fact:
     ansible_connection: ansible.netcommon.network_cli
+
+
+- name: dns | coredns | add base container
+  vars:
+    container_name: "{{ vyos_coredns['container']['name'] | default('vyos-coredns') }}"
+  ansible.builtin.set_fact:
+    vyos_containers: |
+      {{
+        vyos_containers | combine ({
+          'containers': {
+            container_name: {
+              'image': {
+                'repository': vyos_coredns['container']['repository'],
+                'tag': vyos_coredns['container']['tag']
+              },
+              'volumes': {
+                'config': {
+                  'source': vyos_coredns['config_path'],
+                  'destination': '/config'
+                },
+                'hostsfile': {
+                  'source': '/etc/hosts',
+                  'destination': '/etc/hosts:ro'
+                }
+              },
+              'cap-add': [
+                'net-bind-service'
+              ]
+            }
+          }
+        }, recursive=true)
+      }}
+
+- name: dns | coredns | add container host networking
+  when:
+    - vyos_coredns['container']['networks'] is undefined
+  vars:
+    container_name: "{{ vyos_coredns['container']['name'] | default('vyos-coredns') }}"
+  ansible.builtin.set_fact:
+    vyos_containers: |
+      {{
+        vyos_containers | combine ({
+          'containers': {
+            container_name: {
+              'allow-host-networks': true
+            }
+          }
+        }, recursive=true)
+      }}
+
+- name: dns | coredns | add container networking
+  when:
+    - vyos_coredns['container']['networks'] is defined
+  vars:
+    container_name: "{{ vyos_coredns['container']['name'] | default('vyos-coredns') }}"
+  ansible.builtin.set_fact:
+    vyos_containers: |
+      {{
+        vyos_containers | combine ({
+          'containers': {
+            container_name: {
+              'networks': (vyos_coredns['container']['networks'] | from_yaml)
+            }
+          }
+        }, recursive=true)
+      }}

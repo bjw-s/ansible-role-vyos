@@ -1,11 +1,4 @@
 ---
-
-- name: post-config | manage script
-  ansible.builtin.import_tasks:
-    file: manage_script.yml
-  tags:
-    - vyos_post_config_script
-
 - name: post-config | save configuration
   when:
     - vyos_save_config

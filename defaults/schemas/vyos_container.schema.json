@@ -130,6 +130,44 @@
               "additionalProperties": {
                 "type": "string"
               }
+            },
+            "ports": {
+              "description": "A dict containing the ports to be configured in the container.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "description": "The source port on the host.",
+                    "type": "integer"
+                  },
+                  "destination": {
+                    "description": "The destination port on the container.",
+                    "type": "integer"
+                  }
+                },
+                "required": ["source", "destination"],
+                "additionalProperties": false
+              }
+            },
+            "volumes": {
+              "description": "A dict containing the volumes to be configured in the container.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "description": "The source port on the host.",
+                    "type": "integer"
+                  },
+                  "destination": {
+                    "description": "The destination port on the container.",
+                    "type": "integer"
+                  }
+                },
+                "required": ["source", "destination"],
+                "additionalProperties": false
+              }
             }
           },
           "required": ["image"],
