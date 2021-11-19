@@ -1,0 +1,87 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{%- import "macros/networks.j2" as networks with context -%}
+{%- from "macros/config.j2" import generate_config -%}
+
+{%- set containers = dict() -%}
+
+{#- Containers from gateway config -#}
+{%- set config_containers = (vyos_containers['containers'] | default(dict())) -%}
+{%- for container_name, container_config in config_containers.items() %}
+  {%- set entry = dict() -%}
+
+  {%- set _ = entry.update({'image': container_config['image']['repository'] + ':' + container_config['image']['tag'] }) -%}
+
+  {%- if container_config['allow-host-networks'] is defined and container_config['allow-host-networks'] -%}
+    {%- set _ = entry.update({'allow-host-networks': {}}) -%}
+  {%- endif -%}
+
+  {%- if container_config['cap-add'] is defined -%}
+    {%- set capabilities = dict() -%}
+    {%- for cap in container_config['cap-add'] %}
+      {%- set _ = capabilities.update({cap: {}}) -%}
+    {%- endfor -%}
+    {%- set _ = entry.update({'cap-add': capabilities}) -%}
+  {%- endif -%}
+
+  {%- if container_config['env'] is defined -%}
+    {%- set env_item = dict() -%}
+    {%- for env_key, env_value in container_config['env'].items() %}
+      {%- set _ = env_item.update({
+        env_key: {
+          'value': env_value
+        }
+      }) -%}
+    {%- endfor -%}
+    {%- set _ = entry.update({'environment': env_item}) -%}
+  {%- endif -%}
+
+  {%- if container_config['volumes'] is defined -%}
+    {%- set volumes = dict() -%}
+    {%- for vol_name, vol_config in container_config['volumes'].items() %}
+      {%- set _ = volumes.update({vol_name: vol_config}) -%}
+    {%- endfor -%}
+    {%- set _ = entry.update({'volume': volumes}) -%}
+  {%- endif -%}
+
+  {%- if container_config['ports'] is defined -%}
+    {%- set ports = dict() -%}
+    {%- for port_name, port_config in container_config['ports'].items() %}
+      {%- set _ = ports.update({port_name: port_config}) -%}
+    {%- endfor -%}
+    {%- set _ = entry.update({'port': ports}) -%}
+  {%- endif -%}
+
+  {%- if container_config['networks'] is defined -%}
+    {%- set container_network_entry = dict() -%}
+    {%- for container_network_name, container_network_config in container_config['networks'].items() %}
+
+      {#- Get the network config from the gateway config -#}
+      {%- set container_network = vyos_containers['networks'][container_network_name] -%}
+      {#- Determine the configured network CIDR -#}
+      {%- if container_network['network'] is defined -%}
+        {%- set network = networks.get_network_by_name(container_network['network']) | from_yaml -%}
+        {%- set cidr = network['cidr'] -%}
+      {%- elif container_network['prefix'] is defined -%}
+        {%- set cidr = container_network['prefix'] -%}
+      {%- endif -%}
+
+      {#- Determine the IP address and add it to the container -#}
+      {%- set _ = container_network_entry.update({
+        container_network_name: {
+          'address': (cidr | ansible.netcommon.ipv4(container_network_config['ipv4_hostid']) | ansible.netcommon.ipv4('address'))
+        }
+      }) -%}
+    {%- endfor -%}
+    {%- set _ = entry.update({'network': container_network_entry}) -%}
+  {%- endif -%}
+
+  {%- set _ = containers.update({container_name: entry}) -%}
+{%- endfor -%}
+
+{#- Process the collected config entries -#}
+{%- if containers | length > 0 -%}
+  {{- generate_config(current_config, containers, ['container', 'name']) -}}
+{%- else -%}
+  {#- Remove the entire key if no config is found -#}
+  delete container name
+{%- endif -%}

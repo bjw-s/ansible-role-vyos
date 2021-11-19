@@ -42,6 +42,7 @@ theme:
 
 # Plugins
 plugins:
+  - awesome-pages
   - search:
       lang: en
   - minify:
@@ -54,14 +55,9 @@ markdown_extensions:
   - attr_list
   - toc:
       permalink: true
+      toc_depth: "1-2"
 
 # Customization
-extra_javascript:
-  - _assets/js/fancybox.umd.js
-
-extra_css:
-  - _assets/css/fancybox.css
-
 extra:
   social:
     - icon: fontawesome/brands/github
@@ -71,3 +67,4 @@ extra:
 nav:
   - Home:
       - "index.md"
+  - ...

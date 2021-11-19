@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vyos_coredns.schema.json",
+  "title": "vyos_coredns",
+  "description": "VyOS CoreDNS configuration",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "description": "Enable a CoreDNS container.",
+      "type": "boolean",
+      "examples": [{"enabled": true}]
+    },
+    "config_path": {
+      "description": "Path on the VyOS router where the configuration is stored.",
+      "type": "string",
+      "examples": [{"config_path": "/config/coredns"}]
+    },
+    "container": {
+      "description": "CoreDNS container configuration",
+      "type": "object",
+      "properties": {
+        "repository": {
+          "description": "Configure the CoreDNS image repository.",
+          "type": "string"
+        },
+        "tag": {
+          "description": "Configure the CoreDNS image tag.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Configure the CoreDNS container name. Defaults to `vyos-coredns`",
+          "type": "string"
+        },
+        "networks": {
+          "description": "Configure CoreDNS container networking. If not present, the container will be configured with host networking.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "title": "Container network entry",
+            "properties": {
+              "ipv4_hostid": {
+                "description": "The host id that is used to generate the IP address on the specified network",
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false,
+            "examples": [
+              {
+                "networks": {
+                  "services": {
+                    "ipv4_hostid": 2
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": ["repository", "tag"],
+      "examples": [
+        {
+          "container": {
+            "repository": "ghcr.io/k8s-at-home/coredns",
+            "tag": "v1.8.4"
+          }
+        }
+      ]
+    },
+    "k8s_gateway": {
+      "description": "CoreDNS k8s_gateway plugin configuration",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Enable the k8s_gateway plugin.",
+          "type": "boolean"
+        },
+        "api_ip": {
+          "description": "Address where the K8s API can be reached.",
+          "type": "string"
+        },
+        "domains": {
+          "description": "Configure the domains which should be handled by the k8s_gatway plugin.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "service_account_ns": {
+          "description": "Namespace where the ServiceAccount is defined.",
+          "type": "string"
+        },
+        "service_account": {
+          "description": "Name of the ServiceAccount that is used to communicate with the K8s API. This role does *not* create the ServiceAccount.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": ["api_ip", "domains", "service_account_ns", "service_account"],
+      "examples": [
+        {
+          "k8s_gateway": {
+            "enabled": true,
+            "api_ip": "10.0.0.10",
+            "domains": ["example.com"],
+            "service_account_ns": "default",
+            "service_account": "coredns"
+          }
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}

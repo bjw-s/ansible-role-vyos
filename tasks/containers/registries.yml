@@ -1,0 +1,14 @@
+---
+- name: containers | registries | read config json
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/_utils/get_config_json.yml"
+    apply:
+      vars:
+        source: "containers | registries"
+
+- name: containers | registries | define entries
+  vars:
+    current_config: "{{ vyos_active_config_json['container']['registry'] | default({}) }}"
+  vyos.vyos.vyos_config:
+    match: line
+    lines: "{{ lookup('template', './config/containers/registries.j2') }}"
