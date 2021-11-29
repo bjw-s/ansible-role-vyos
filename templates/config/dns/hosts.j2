@@ -1,0 +1,26 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+{#- Collect hosts entries to be served -#}
+{%- set hosts_entries = dict() -%}
+
+{%- for hostname, host in vyos_address_book_enriched['hosts'].items() -%}
+  {# Add hosts entries for devices #}
+  {%- if host['ipv4_addr'] is defined -%}
+    {%- set _ = hosts_entries.update({(hostname + '.' + vyos_domain): {'inet': host['ipv4_addr']}}) -%}
+  {% endif -%}
+
+  {#- Add hosts entries for device aliases -#}
+  {% if host['aliases'] is defined and host['ipv4_addr'] is defined -%}
+    {%- for alias in host['aliases'] -%}
+      {%- set _ = hosts_entries.update({alias: {'inet': host['ipv4_addr']}}) -%}
+    {% endfor -%}
+  {% endif -%}
+{% endfor -%}
+
+{#- Add manually specified static host mappings -#}
+{%- for hosts_entry in vyos_address_book_enriched['static_mappings'] | selectattr('ipv4_addr', 'defined') -%}
+  {%- set _ = hosts_entries.update({hosts_entry['hostname']: {'inet': hosts_entry['ipv4_addr']}}) -%}
+{% endfor -%}
+
+{%- for hosts_entry_name, hosts_entry_config in hosts_entries.items() %}
+{{ hosts_entry_config['inet'] }}    {{ hosts_entry_name }}
+{% endfor -%}

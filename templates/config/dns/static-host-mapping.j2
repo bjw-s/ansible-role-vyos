@@ -5,8 +5,8 @@
 {%- set static_host_mappings = dict() -%}
 
 {%- for hostname, host in vyos_address_book_enriched['hosts'].items() -%}
-  {# Add static host mappings for devices that are not DHCP clients #}
-  {%- if host['dhcp_client'] is defined and host['dhcp_client'] == false and host['ipv4_addr'] is defined -%}
+  {# Add static host mappings for devices #}
+  {%- if host['ipv4_addr'] is defined -%}
     {%- set _ = static_host_mappings.update({(hostname + '.' + vyos_domain): {'inet': host['ipv4_addr']}}) -%}
   {% endif -%}
 

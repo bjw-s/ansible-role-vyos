@@ -44,10 +44,19 @@
     lstrip_blocks: true
   become: true
 
+- name: dns | coredns | manage custom hosts file
+  ansible.builtin.template:
+    src: "{{ vyos_coredns['corefile_template'] | default('config/dns/hosts.j2') }}"
+    dest: "{{ vyos_coredns['config_path'] }}/hosts"
+    owner: root
+    group: vyattacfg
+    mode: "0775"
+    lstrip_blocks: true
+  become: true
+
 - name: dns | coredns | switch to network_cli connection
   set_fact:
     ansible_connection: ansible.netcommon.network_cli
-
 
 - name: dns | coredns | add base container
   vars:
@@ -66,10 +75,6 @@
                 'config': {
                   'source': vyos_coredns['config_path'],
                   'destination': '/config'
-                },
-                'hostsfile': {
-                  'source': '/etc/hosts',
-                  'destination': '/etc/hosts:ro'
                 }
               },
               'cap-add': [
