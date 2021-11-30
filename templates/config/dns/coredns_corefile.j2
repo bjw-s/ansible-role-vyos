@@ -1,20 +1,24 @@
-{%- set listen_addresses = ['127.0.0.1'] -%}
-{%- for interface in vyos_coredns['interfaces'] -%}
-  {%- set listen_addresses = listen_addresses.append(vyos_interfaces_enriched[interface]['ipv4_addr'] | ansible.netcommon.ipv4('address')) -%}
-{%- endfor -%}
+{%- if vyos_coredns['interfaces'] is defined -%}
+  {%- set listen_addresses = ['127.0.0.1'] -%}
+  {%- for interface in vyos_coredns['interfaces'] -%}
+    {%- set listen_addresses = listen_addresses.append(vyos_interfaces_enriched[interface]['ipv4_addr'] | ansible.netcommon.ipv4('address')) -%}
+  {%- endfor -%}
+{%- endif -%}
 
 (common) {
+  {% if listen_addresses is defined %}
   bind {{ listen_addresses | unique | join(' ') }}
+  {% endif %}
   errors
-  log
+  log error
   reload
   loadbalance
-  cache 300
+  cache
   loop
   local
 
   hosts /config/hosts {
-    ttl 600
+    ttl 1
     reload 5s
     fallthrough
   }
@@ -34,6 +38,10 @@
   import common
   forward . tls://1.1.1.1 tls://1.0.0.1 {
     tls_servername cloudflare-dns.com
+  }
+
+  health {
+    lameduck 5s
   }
 }
 
