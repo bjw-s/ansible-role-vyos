@@ -34,6 +34,14 @@
       {%- set stop_addr = vyos_interface['network']['cidr'] | ansible.netcommon.ipv4(server_settings['stop_addr'] | default(254)) | ansible.netcommon.ipv4('address') -%}
       {%- set subnet_parameters = server_settings['subnet_parameters'] | default(none) -%}
 
+      {%- if 'service' in dns_server -%}
+        {%- if dns_server['service'] in vyos_address_book_enriched['services'] -%}
+          {%- set dns_server = vyos_address_book_enriched['services'][dns_server['service']]['ipv4_addr'] -%}
+        {%- else -%}
+          {{ ('OK text' if false) | mandatory('The specified service is not a valid service in the address book') }}
+        {%- endif -%}
+      {%- endif -%}
+
       {# Apply interface specific settings #}
       {%- set _ = entry.update({'authoritative': {}}) -%}
       {%- set _ = entry.update({'subnet': {
