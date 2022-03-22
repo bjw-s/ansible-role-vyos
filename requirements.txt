@@ -2,7 +2,7 @@ ansible-core==2.12.3
 ansible-lint==6.0.1
 jmespath==1.0.0
 netaddr==0.8.0
-openshift==0.12.1
+openshift==0.13.1
 paramiko==2.10.3
 
 -r "requirements-mkdocs.txt"
