@@ -5,6 +5,12 @@
   tags:
     - vyos_services_dhcp_server
 
+- name: 'services | dynamic-dns'
+  ansible.builtin.import_tasks:
+    file: dynamic-dns.yml
+  tags:
+    - vyos_services_dynamic_dns
+
 - name: 'services | igmp-proxy'
   ansible.builtin.import_tasks:
     file: igmp-proxy.yml

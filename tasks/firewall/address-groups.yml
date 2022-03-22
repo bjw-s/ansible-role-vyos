@@ -1,6 +1,6 @@
 ---
 - name: firewall | address-groups | switch to ssh connection
-  set_fact:
+  ansible.builtin.set_fact:
     ansible_connection: ssh
 
 - name: firewall | address-groups | get file contents from remote
@@ -13,7 +13,7 @@
   register: firewall_remote_address_files
 
 - name: firewall | address-groups | switch to network_cli connection
-  set_fact:
+  ansible.builtin.set_fact:
     ansible_connection: ansible.netcommon.network_cli
 
 - name: firewall | address-groups | store vyos_managed_address_groups

@@ -18,3 +18,7 @@ vyos_broadcast_relay:
 vyos_mdns_repeater:
   enabled: false
   interfaces: []
+
+vyos_dynamic_dns:
+  enabled: false
+  interfaces: {}

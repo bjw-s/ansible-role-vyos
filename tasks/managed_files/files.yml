@@ -1,6 +1,6 @@
 ---
 - name: managed files | switch to ssh connection
-  set_fact:
+  ansible.builtin.set_fact:
     ansible_connection: ssh
 
 - name: managed files | make sure target folders exist
@@ -42,5 +42,5 @@
     - item['template'] is defined
 
 - name: managed files | switch to network_cli connection
-  set_fact:
+  ansible.builtin.set_fact:
     ansible_connection: ansible.netcommon.network_cli
