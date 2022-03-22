@@ -1,6 +1,6 @@
 ---
 - name: dns | coredns | switch to ssh connection
-  set_fact:
+  ansible.builtin.set_fact:
     ansible_connection: ssh
 
 - name: dns | coredns | create config directory on host
@@ -55,7 +55,7 @@
   become: true
 
 - name: dns | coredns | switch to network_cli connection
-  set_fact:
+  ansible.builtin.set_fact:
     ansible_connection: ansible.netcommon.network_cli
 
 - name: dns | coredns | add base container

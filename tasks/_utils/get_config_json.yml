@@ -6,5 +6,5 @@
   register: active_config
 
 - name: "{{ source | default('get_config_json') }} | store active config json"
-  set_fact:
+  ansible.builtin.set_fact:
     vyos_active_config_json: "{{ active_config['stdout'][0] }}"

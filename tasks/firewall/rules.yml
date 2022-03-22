@@ -1,6 +1,6 @@
 ---
 - name: firewall | rules | read built-in rules
-  include_vars:
+  ansible.builtin.include_vars:
     file: "{{ role_path }}/files/firewall/builtin_rules.yml"
     name: vyos_firewall_builtin_rules
 
