@@ -10,7 +10,7 @@ repos:
       - id: yamllint
 
   - repo: https://github.com/ansible-community/ansible-lint.git
-    rev: v6.0.2
+    rev: v6.1.0
     hooks:
       - id: ansible-lint
         files: \.(yaml|yml)$
