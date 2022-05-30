@@ -1,5 +1,5 @@
 ansible-core==2.13.0
-ansible-lint==6.2.1
+ansible-lint==6.2.2
 jmespath==1.0.0
 netaddr==0.8.0
 openshift==0.13.1
