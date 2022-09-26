@@ -19,6 +19,12 @@
   when:
     - vyos_remote_syslog is defined
 
+- name: 'system | users'
+  ansible.builtin.import_tasks:
+    file: users.yml
+  tags:
+    - vyos_system_users
+
 - name: 'system | task-scheduler'
   ansible.builtin.import_tasks:
     file: task-scheduler.yml
